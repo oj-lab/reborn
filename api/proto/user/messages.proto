@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+option go_package = "github.com/oj-lab/reborn/protobuf/user;userpb";
+
+package user;
+
+message User {
+    uint64 id = 1;
+    string name = 2;
+    string email = 3;
+}
+
+message CreateUserRequest {
+    string name = 1;
+    string email = 2;
+}
+
+message CreateUserResponse {
+}
+
+message GetUserRequest {
+    uint64 id = 1;
+}
+
+message GetUserResponse {
+    User user = 1;
+}
+
+message UpdateUserRequest {
+    uint64 id = 1;
+    optional string name = 2;
+    optional string email = 3;
+}
+
+message UpdateUserResponse {
+    User user = 1;
+}
+
+message DeleteUserRequest {
+    uint64 id = 1;
+}
+
+message DeleteUserResponse {
+    uint64 id = 1;
+}
