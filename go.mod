@@ -4,7 +4,9 @@ go 1.24.1
 
 require (
 	github.com/gin-gonic/gin v1.10.1
+	github.com/google/uuid v1.6.0
 	github.com/spf13/viper v1.20.1
+	golang.org/x/oauth2 v0.26.0
 	google.golang.org/grpc v1.72.2
 	google.golang.org/protobuf v1.36.6
 	gorm.io/driver/postgres v1.6.0

@@ -12,5 +12,7 @@ func main() {
 	{
 		userGroup.POST("/", handlers.CreateUser)
 	}
+	engine.GET("/login", handlers.LoginUser)
+	engine.GET("/callback", handlers.CallbackUser)
 	engine.Run(":8080")
 }
