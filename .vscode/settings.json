@@ -1,0 +1,19 @@
+{
+    "protoc": {
+        "options": [
+            "--proto_path=${workspaceRoot}/proto",
+        ]
+    },
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "postgres",
+            "database": "postgres",
+            "username": "postgres"
+        }
+    ],
+    "makefile.configureOnOpen": false
+}
