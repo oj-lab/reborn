@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+option go_package = "github.com/oj-lab/reborn/protobuf/user;userpb";
+
+package user;
+
+enum UserRole {
+    USER = 0;
+    ADMIN = 1;
+}
+
+message User {
+    uint64 id = 1;
+    string name = 2;
+    string email = 3;
+    UserRole role = 4;
+}
+
+message CreateUserRequest {
+    string name = 1;
+    string email = 2;
+    UserRole role = 3;
+    optional string password = 4; // Password, optional, encrypted storage
+}
+
+message CreateUserResponse {
+}
+
+message GetUserRequest {
+    uint64 id = 1;
+}
+
+message GetUserResponse {
+    User user = 1;
+}
+
+message UpdateUserRequest {
+    uint64 id = 1;
+    optional string name = 2;
+    optional string email = 3;
+    optional UserRole role = 4;
+}
+
+message UpdateUserResponse {
+    User user = 1;
+}
+
+message DeleteUserRequest {
+    uint64 id = 1;
+}
+
+message DeleteUserResponse {
+    uint64 id = 1;
+}
+
+message ListUsersRequest {
+    uint64 page = 1;
+    uint64 page_size = 2;
+}
+
+message ListUsersResponse {
+    repeated User users = 1;
+    uint64 total = 2;
+}
+
+message LoginRequest {
+    string email = 1;
+    string password = 2;
+}
+
+message LoginResponse {
+    User user = 1;
+    string token = 2;
+}
+
+message SetPasswordRequest {
+    uint64 user_id = 1;
+    string password = 2;
+}
+
+message SetPasswordResponse {
+}

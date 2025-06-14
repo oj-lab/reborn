@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option go_package = "github.com/oj-lab/reborn/protobuf/user;userpb";
+
+package user;
+
+import "user/messages.proto";
+import "google/protobuf/empty.proto";
+
+service UserService {
+    rpc CreateUser(CreateUserRequest) returns (google.protobuf.Empty);
+    rpc GetUser(GetUserRequest) returns (GetUserResponse);
+    rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
+    rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
+    rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+    rpc Login(LoginRequest) returns (LoginResponse);
+    rpc SetPassword(SetPasswordRequest) returns (SetPasswordResponse);
+}
