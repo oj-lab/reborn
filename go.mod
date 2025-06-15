@@ -3,7 +3,6 @@ module github.com/oj-lab/reborn
 go 1.24.1
 
 require (
-	github.com/google/uuid v1.6.0
 	github.com/labstack/echo/v4 v4.13.4
 	github.com/lmittmann/tint v1.1.2
 	github.com/redis/go-redis/v9 v9.10.0
