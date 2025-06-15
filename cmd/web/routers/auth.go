@@ -8,7 +8,7 @@ import (
 func RegisterAuthRoutes(e *echo.Echo) {
 	baseGroup := e.Group("/auth")
 	{
-		baseGroup.GET("/login", handlers.LoginUser)
-		baseGroup.GET("/callback", handlers.CallbackUser)
+		baseGroup.GET("/:provider/login", handlers.Login)
+		baseGroup.GET("/:provider/callback", handlers.Callback)
 	}
 }

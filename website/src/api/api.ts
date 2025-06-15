@@ -42,6 +42,12 @@ export interface UserpbCreateUserRequest {
      */
     'name'?: string;
     /**
+     * Password, optional, encrypted storage
+     * @type {string}
+     * @memberof UserpbCreateUserRequest
+     */
+    'password'?: string;
+    /**
      * 
      * @type {UserpbUserRole}
      * @memberof UserpbCreateUserRequest
