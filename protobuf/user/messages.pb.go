@@ -68,13 +68,15 @@ func (UserRole) EnumDescriptor() ([]byte, []int) {
 }
 
 type User struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Email         string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
-	Role          UserRole               `protobuf:"varint,4,opt,name=role,proto3,enum=user.UserRole" json:"role,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Id             uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name           string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Email          string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
+	Role           UserRole               `protobuf:"varint,4,opt,name=role,proto3,enum=user.UserRole" json:"role,omitempty"`
+	GithubId       *string                `protobuf:"bytes,5,opt,name=github_id,json=githubId,proto3,oneof" json:"github_id,omitempty"`
+	HashedPassword *string                `protobuf:"bytes,6,opt,name=hashed_password,json=hashedPassword,proto3,oneof" json:"hashed_password,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *User) Reset() {
@@ -135,12 +137,27 @@ func (x *User) GetRole() UserRole {
 	return UserRole_USER
 }
 
+func (x *User) GetGithubId() string {
+	if x != nil && x.GithubId != nil {
+		return *x.GithubId
+	}
+	return ""
+}
+
+func (x *User) GetHashedPassword() string {
+	if x != nil && x.HashedPassword != nil {
+		return *x.HashedPassword
+	}
+	return ""
+}
+
 type CreateUserRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
 	Role          UserRole               `protobuf:"varint,3,opt,name=role,proto3,enum=user.UserRole" json:"role,omitempty"`
 	Password      *string                `protobuf:"bytes,4,opt,name=password,proto3,oneof" json:"password,omitempty"` // Password, optional, encrypted storage
+	GithubId      *string                `protobuf:"bytes,5,opt,name=github_id,json=githubId,proto3,oneof" json:"github_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -199,6 +216,13 @@ func (x *CreateUserRequest) GetRole() UserRole {
 func (x *CreateUserRequest) GetPassword() string {
 	if x != nil && x.Password != nil {
 		return *x.Password
+	}
+	return ""
+}
+
+func (x *CreateUserRequest) GetGithubId() string {
+	if x != nil && x.GithubId != nil {
+		return *x.GithubId
 	}
 	return ""
 }
@@ -333,6 +357,8 @@ type UpdateUserRequest struct {
 	Name          *string                `protobuf:"bytes,2,opt,name=name,proto3,oneof" json:"name,omitempty"`
 	Email         *string                `protobuf:"bytes,3,opt,name=email,proto3,oneof" json:"email,omitempty"`
 	Role          *UserRole              `protobuf:"varint,4,opt,name=role,proto3,enum=user.UserRole,oneof" json:"role,omitempty"`
+	Password      *string                `protobuf:"bytes,5,opt,name=password,proto3,oneof" json:"password,omitempty"`
+	GithubId      *string                `protobuf:"bytes,6,opt,name=github_id,json=githubId,proto3,oneof" json:"github_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -393,6 +419,20 @@ func (x *UpdateUserRequest) GetRole() UserRole {
 		return *x.Role
 	}
 	return UserRole_USER
+}
+
+func (x *UpdateUserRequest) GetPassword() string {
+	if x != nil && x.Password != nil {
+		return *x.Password
+	}
+	return ""
+}
+
+func (x *UpdateUserRequest) GetGithubId() string {
+	if x != nil && x.GithubId != nil {
+		return *x.GithubId
+	}
+	return ""
 }
 
 type UpdateUserResponse struct {
@@ -823,36 +863,109 @@ func (*SetPasswordResponse) Descriptor() ([]byte, []int) {
 	return file_user_messages_proto_rawDescGZIP(), []int{14}
 }
 
+type GithubLoginRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	GithubId      string                 `protobuf:"bytes,1,opt,name=github_id,json=githubId,proto3" json:"github_id,omitempty"`
+	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
+	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GithubLoginRequest) Reset() {
+	*x = GithubLoginRequest{}
+	mi := &file_user_messages_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GithubLoginRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GithubLoginRequest) ProtoMessage() {}
+
+func (x *GithubLoginRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_user_messages_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GithubLoginRequest.ProtoReflect.Descriptor instead.
+func (*GithubLoginRequest) Descriptor() ([]byte, []int) {
+	return file_user_messages_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *GithubLoginRequest) GetGithubId() string {
+	if x != nil {
+		return x.GithubId
+	}
+	return ""
+}
+
+func (x *GithubLoginRequest) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *GithubLoginRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
 var File_user_messages_proto protoreflect.FileDescriptor
 
 const file_user_messages_proto_rawDesc = "" +
 	"\n" +
-	"\x13user/messages.proto\x12\x04user\"d\n" +
+	"\x13user/messages.proto\x12\x04user\"\xd6\x01\n" +
 	"\x04User\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
 	"\x05email\x18\x03 \x01(\tR\x05email\x12\"\n" +
-	"\x04role\x18\x04 \x01(\x0e2\x0e.user.UserRoleR\x04role\"\x8f\x01\n" +
+	"\x04role\x18\x04 \x01(\x0e2\x0e.user.UserRoleR\x04role\x12 \n" +
+	"\tgithub_id\x18\x05 \x01(\tH\x00R\bgithubId\x88\x01\x01\x12,\n" +
+	"\x0fhashed_password\x18\x06 \x01(\tH\x01R\x0ehashedPassword\x88\x01\x01B\f\n" +
+	"\n" +
+	"_github_idB\x12\n" +
+	"\x10_hashed_password\"\xbf\x01\n" +
 	"\x11CreateUserRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\"\n" +
 	"\x04role\x18\x03 \x01(\x0e2\x0e.user.UserRoleR\x04role\x12\x1f\n" +
-	"\bpassword\x18\x04 \x01(\tH\x00R\bpassword\x88\x01\x01B\v\n" +
-	"\t_password\"\x14\n" +
+	"\bpassword\x18\x04 \x01(\tH\x00R\bpassword\x88\x01\x01\x12 \n" +
+	"\tgithub_id\x18\x05 \x01(\tH\x01R\bgithubId\x88\x01\x01B\v\n" +
+	"\t_passwordB\f\n" +
+	"\n" +
+	"_github_id\"\x14\n" +
 	"\x12CreateUserResponse\" \n" +
 	"\x0eGetUserRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\"1\n" +
 	"\x0fGetUserResponse\x12\x1e\n" +
 	"\x04user\x18\x01 \x01(\v2\n" +
-	".user.UserR\x04user\"\x9c\x01\n" +
+	".user.UserR\x04user\"\xfa\x01\n" +
 	"\x11UpdateUserRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x17\n" +
 	"\x04name\x18\x02 \x01(\tH\x00R\x04name\x88\x01\x01\x12\x19\n" +
 	"\x05email\x18\x03 \x01(\tH\x01R\x05email\x88\x01\x01\x12'\n" +
-	"\x04role\x18\x04 \x01(\x0e2\x0e.user.UserRoleH\x02R\x04role\x88\x01\x01B\a\n" +
+	"\x04role\x18\x04 \x01(\x0e2\x0e.user.UserRoleH\x02R\x04role\x88\x01\x01\x12\x1f\n" +
+	"\bpassword\x18\x05 \x01(\tH\x03R\bpassword\x88\x01\x01\x12 \n" +
+	"\tgithub_id\x18\x06 \x01(\tH\x04R\bgithubId\x88\x01\x01B\a\n" +
 	"\x05_nameB\b\n" +
 	"\x06_emailB\a\n" +
-	"\x05_role\"4\n" +
+	"\x05_roleB\v\n" +
+	"\t_passwordB\f\n" +
+	"\n" +
+	"_github_id\"4\n" +
 	"\x12UpdateUserResponse\x12\x1e\n" +
 	"\x04user\x18\x01 \x01(\v2\n" +
 	".user.UserR\x04user\"#\n" +
@@ -877,7 +990,11 @@ const file_user_messages_proto_rawDesc = "" +
 	"\x12SetPasswordRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x04R\x06userId\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\"\x15\n" +
-	"\x13SetPasswordResponse*\x1f\n" +
+	"\x13SetPasswordResponse\"[\n" +
+	"\x12GithubLoginRequest\x12\x1b\n" +
+	"\tgithub_id\x18\x01 \x01(\tR\bgithubId\x12\x14\n" +
+	"\x05email\x18\x02 \x01(\tR\x05email\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name*\x1f\n" +
 	"\bUserRole\x12\b\n" +
 	"\x04USER\x10\x00\x12\t\n" +
 	"\x05ADMIN\x10\x01B/Z-github.com/oj-lab/reborn/protobuf/user;userpbb\x06proto3"
@@ -895,7 +1012,7 @@ func file_user_messages_proto_rawDescGZIP() []byte {
 }
 
 var file_user_messages_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_user_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_user_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_user_messages_proto_goTypes = []any{
 	(UserRole)(0),               // 0: user.UserRole
 	(*User)(nil),                // 1: user.User
@@ -913,6 +1030,7 @@ var file_user_messages_proto_goTypes = []any{
 	(*LoginResponse)(nil),       // 13: user.LoginResponse
 	(*SetPasswordRequest)(nil),  // 14: user.SetPasswordRequest
 	(*SetPasswordResponse)(nil), // 15: user.SetPasswordResponse
+	(*GithubLoginRequest)(nil),  // 16: user.GithubLoginRequest
 }
 var file_user_messages_proto_depIdxs = []int32{
 	0, // 0: user.User.role:type_name -> user.UserRole
@@ -934,6 +1052,7 @@ func file_user_messages_proto_init() {
 	if File_user_messages_proto != nil {
 		return
 	}
+	file_user_messages_proto_msgTypes[0].OneofWrappers = []any{}
 	file_user_messages_proto_msgTypes[1].OneofWrappers = []any{}
 	file_user_messages_proto_msgTypes[5].OneofWrappers = []any{}
 	type x struct{}
@@ -942,7 +1061,7 @@ func file_user_messages_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_user_messages_proto_rawDesc), len(file_user_messages_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   15,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

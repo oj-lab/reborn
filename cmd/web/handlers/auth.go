@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -51,18 +50,99 @@ func Callback(ctx echo.Context) error {
 		return ctx.String(http.StatusInternalServerError, "Failed to get user info: "+err.Error())
 	}
 
-	fmt.Println(userInfo)
-	// TODO: Check if user exists, if not create user
-	req := &userpb.CreateUserRequest{
-		Name:  userInfo.Name,
-		Email: userInfo.Email,
+	if providerName != "github" {
+		return ctx.String(http.StatusBadRequest, "Unsupported provider")
 	}
 
-	_, err = userServiceClient.CreateUser(context.Background(), req)
+	req := &userpb.GithubLoginRequest{
+		GithubId: userInfo.ID,
+		Name:     userInfo.Name,
+		Email:    userInfo.Email,
+	}
+
+	loginResp, err := userServiceClient.GithubLogin(context.Background(), req)
 	if err != nil {
-		return ctx.String(http.StatusInternalServerError, "Failed to create user: "+err.Error())
+		return ctx.String(http.StatusInternalServerError, "Failed to login: "+err.Error())
 	}
 
 	// TODO: Login user and set session
-	return ctx.JSON(http.StatusOK, userInfo)
+	return ctx.JSON(http.StatusOK, loginResp)
+}
+
+type PasswordLoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func LoginWithPassword(c echo.Context) error {
+	req := new(PasswordLoginRequest)
+	if err := c.Bind(req); err != nil {
+		return c.String(http.StatusBadRequest, "Invalid request")
+	}
+
+	grpcReq := &userpb.LoginRequest{
+		Email:    req.Email,
+		Password: req.Password,
+	}
+
+	resp, err := userServiceClient.Login(context.Background(), grpcReq)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "Failed to login: "+err.Error())
+	}
+
+	return c.JSON(http.StatusOK, resp)
+}
+
+type PasswordRegisterRequest struct {
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func RegisterWithPassword(c echo.Context) error {
+	req := new(PasswordRegisterRequest)
+	if err := c.Bind(req); err != nil {
+		return c.String(http.StatusBadRequest, "Invalid request")
+	}
+
+	grpcReq := &userpb.CreateUserRequest{
+		Name:     req.Name,
+		Email:    req.Email,
+		Password: &req.Password,
+	}
+
+	_, err := userServiceClient.CreateUser(context.Background(), grpcReq)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "Failed to register: "+err.Error())
+	}
+
+	return c.NoContent(http.StatusCreated)
+}
+
+type SetPasswordRequest struct {
+	Password string `json:"password"`
+}
+
+func SetPassword(c echo.Context) error {
+	req := new(SetPasswordRequest)
+	if err := c.Bind(req); err != nil {
+		return c.String(http.StatusBadRequest, "Invalid request")
+	}
+
+	userID, ok := c.Get("userID").(uint64)
+	if !ok || userID == 0 {
+		return c.String(http.StatusUnauthorized, "Invalid user ID from token")
+	}
+
+	grpcReq := &userpb.SetPasswordRequest{
+		UserId:   userID,
+		Password: req.Password,
+	}
+
+	_, err := userServiceClient.SetPassword(context.Background(), grpcReq)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "Failed to set password: "+err.Error())
+	}
+
+	return c.NoContent(http.StatusOK)
 }

@@ -6,6 +6,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **email** | **string** |  | [optional] [default to undefined]
+**github_id** | **string** |  | [optional] [default to undefined]
 **name** | **string** |  | [optional] [default to undefined]
 **password** | **string** | Password, optional, encrypted storage | [optional] [default to undefined]
 **role** | [**UserpbUserRole**](UserpbUserRole.md) |  | [optional] [default to undefined]
@@ -17,6 +18,7 @@ import { UserpbCreateUserRequest } from './api';
 
 const instance: UserpbCreateUserRequest = {
     email,
+    github_id,
     name,
     password,
     role,
