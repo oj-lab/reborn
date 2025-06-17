@@ -172,35 +172,28 @@ func (s *UserService) UpdateUser(ctx context.Context, req *userpb.UpdateUserRequ
 		return nil, errors.New("user not found")
 	}
 
-	// Create a temporary model to validate against
-	tempModel := *userModel
-	if req.Name != nil {
-		tempModel.Name = *req.Name
-	}
-	if req.Email != nil {
-		tempModel.Email = *req.Email
-	}
-	if req.GithubId != nil {
-		tempModel.GithubID = req.GithubId
+	// Determine the final state of GithubID after the potential update.
+	githubIdWillBeEmpty := (req.GithubId != nil && *req.GithubId == "") ||
+		(req.GithubId == nil && (userModel.GithubID == nil || *userModel.GithubID == ""))
+
+	// Determine the final state of the password after the potential update.
+	passwordWillBeEmpty := (req.Password != nil && *req.Password == "") ||
+		(req.Password == nil && (userModel.HashedPassword == nil || *userModel.HashedPassword == ""))
+
+	// Validation: Ensure the user retains at least one login method.
+	if githubIdWillBeEmpty && passwordWillBeEmpty {
+		return nil, errors.New("user cannot have both github_id and password empty")
 	}
 
 	var hashedPassword *string
 	if req.Password != nil {
-		if *req.Password == "" {
-			tempModel.HashedPassword = nil
-		} else {
+		if *req.Password != "" {
 			h, err := HashPassword(*req.Password)
 			if err != nil {
 				return nil, err
 			}
 			hashedPassword = &h
-			tempModel.HashedPassword = hashedPassword
 		}
-	}
-
-	// Validation
-	if (tempModel.GithubID == nil || *tempModel.GithubID == "") && (tempModel.HashedPassword == nil || *tempModel.HashedPassword == "") {
-		return nil, errors.New("user cannot have both github_id and password empty")
 	}
 
 	// Build the request for the repository
