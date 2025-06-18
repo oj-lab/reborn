@@ -1,0 +1,8 @@
+# This is an example configuration file for local development.
+# To use it, copy this file to "development.toml" and fill in your actual credentials.
+# The "development.toml" file is ignored by Git, so your secrets will not be committed.
+
+[oauth.github]
+client_id = "YOUR_GITHUB_CLIENT_ID_HERE"
+client_secret = "YOUR_GITHUB_CLIENT_SECRET_HERE"
+redirect_url = "http://localhost:8080/auth/github/callback" 

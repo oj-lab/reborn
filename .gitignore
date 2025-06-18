@@ -1,1 +1,5 @@
 bin/
+
+# Ignore mode-specific config files, but not the defaults.
+configs/**/*.toml
+!configs/**/default.toml

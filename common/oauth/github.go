@@ -4,26 +4,40 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 
+	"github.com/oj-lab/reborn/common/app"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 )
 
-type GithubProvider struct {
-	config *oauth2.Config
-}
+var githubOAuthConfig *oauth2.Config
 
-func NewGitHubProvider() Provider {
-	return &GithubProvider{
-		config: &oauth2.Config{
-			ClientID:     os.Getenv("GITHUB_CLIENT_ID"),
-			ClientSecret: os.Getenv("GITHUB_CLIENT_SECRET"),
-			RedirectURL:  "http://localhost:8080/auth/github/callback",
-			Scopes:       []string{"user:email", "read:user"},
-			Endpoint:     github.Endpoint,
+func newGithubOAuthConfig() *oauth2.Config {
+	config := app.Config()
+	return &oauth2.Config{
+		ClientID:     config.GetString("oauth.github.client_id"),
+		ClientSecret: config.GetString("oauth.github.client_secret"),
+		RedirectURL:  config.GetString("oauth.github.redirect_url"),
+		Scopes:       []string{"user:email", "read:user"},
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  github.Endpoint.AuthURL,
+			TokenURL: github.Endpoint.TokenURL,
 		},
 	}
+}
+
+func NewGithubProvider() Provider {
+	if githubOAuthConfig == nil {
+		githubOAuthConfig = newGithubOAuthConfig()
+	}
+
+	return &GithubProvider{
+		config: githubOAuthConfig,
+	}
+}
+
+type GithubProvider struct {
+	config *oauth2.Config
 }
 
 func (p *GithubProvider) GithubLoginEnabled() bool {
