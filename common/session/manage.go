@@ -10,13 +10,17 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+const DefaultSessionTTL = 24 * time.Hour
+
 type Manager struct {
 	rdb redis.UniversalClient
+	ttl time.Duration
 }
 
 func NewManager() *Manager {
 	return &Manager{
 		rdb: redis_client.GetRDB(),
+		ttl: DefaultSessionTTL,
 	}
 }
 
@@ -53,6 +57,11 @@ func (m *Manager) Get(ctx context.Context, sessionID string) (*Session, error) {
 			return nil, nil // Session not found
 		}
 		return nil, err
+	}
+
+	if err := m.rdb.Expire(ctx, sessionID, m.ttl).Err(); err != nil {
+		// If refreshing fails, we can log the error but we don't want to fail the request.
+		// The user is still authenticated for this request.
 	}
 
 	var session Session

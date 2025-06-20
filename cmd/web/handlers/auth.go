@@ -16,7 +16,6 @@ import (
 )
 
 const (
-	sessionTTL    = 24 * time.Hour
 	oauthStateTTL = 10 * time.Minute
 )
 
@@ -92,7 +91,7 @@ func Callback(ctx echo.Context) error {
 		return ctx.String(http.StatusInternalServerError, "Failed to login: "+err.Error())
 	}
 
-	sessionID, err := sessionManager.Create(context.Background(), uint(loginResp.User.Id), sessionTTL)
+	sessionID, err := sessionManager.Create(context.Background(), uint(loginResp.User.Id), session.DefaultSessionTTL)
 	if err != nil {
 		return ctx.String(http.StatusInternalServerError, "Failed to create session: "+err.Error())
 	}
@@ -100,7 +99,7 @@ func Callback(ctx echo.Context) error {
 	cookie := &http.Cookie{
 		Name:     "session_id",
 		Value:    sessionID,
-		Expires:  time.Now().Add(sessionTTL),
+		Expires:  time.Now().Add(session.DefaultSessionTTL),
 		HttpOnly: true,
 	}
 	ctx.SetCookie(cookie)
@@ -129,7 +128,7 @@ func LoginWithPassword(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "Failed to login: "+err.Error())
 	}
 
-	sessionID, err := sessionManager.Create(context.Background(), uint(resp.User.Id), sessionTTL)
+	sessionID, err := sessionManager.Create(context.Background(), uint(resp.User.Id), session.DefaultSessionTTL)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Failed to create session: "+err.Error())
 	}
@@ -137,7 +136,7 @@ func LoginWithPassword(c echo.Context) error {
 	cookie := &http.Cookie{
 		Name:     "session_id",
 		Value:    sessionID,
-		Expires:  time.Now().Add(sessionTTL),
+		Expires:  time.Now().Add(session.DefaultSessionTTL),
 		HttpOnly: true,
 	}
 	c.SetCookie(cookie)
