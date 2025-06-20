@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/oj-lab/reborn/cmd/web/middleware"
 	"github.com/oj-lab/reborn/common/oauth"
@@ -31,18 +30,27 @@ func getOauthStateKey(state string) string {
 
 func Login(ctx echo.Context) error {
 	providerName := ctx.QueryParam("provider")
+	if providerName == "" {
+		return ctx.String(http.StatusBadRequest, "provider is required")
+	}
+
 	provider, err := oauth.GetProvider(providerName, userServiceClient)
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
-	oauthState := uuid.New().String()
-	stateKey := getOauthStateKey(oauthState)
+	state := oauth.NewState(providerName)
+	encodedState, err := state.Encode()
+	if err != nil {
+		return ctx.String(http.StatusInternalServerError, "failed to create state")
+	}
+
+	stateKey := getOauthStateKey(state.CSRFToken)
 	if err := rdb.Set(ctx.Request().Context(), stateKey, "true", oauthStateTTL).Err(); err != nil {
 		return ctx.String(http.StatusInternalServerError, "failed to save state")
 	}
 
-	url, err := provider.GetAuthURL(oauthState)
+	url, err := provider.GetAuthURL(encodedState)
 	if err != nil {
 		return ctx.String(http.StatusInternalServerError, err.Error())
 	}
@@ -50,14 +58,18 @@ func Login(ctx echo.Context) error {
 }
 
 func Callback(ctx echo.Context) error {
-	providerName := ctx.QueryParam("provider")
-	provider, err := oauth.GetProvider(providerName, userServiceClient)
+	encodedState := ctx.QueryParam("state")
+	state, err := oauth.DecodeState(encodedState)
+	if err != nil {
+		return ctx.String(http.StatusBadRequest, "Invalid state format")
+	}
+
+	provider, err := oauth.GetProvider(state.Provider, userServiceClient)
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
-	state := ctx.QueryParam("state")
-	stateKey := getOauthStateKey(state)
+	stateKey := getOauthStateKey(state.CSRFToken)
 	err = rdb.Get(ctx.Request().Context(), stateKey).Err()
 	if err == redis.Nil {
 		return ctx.String(http.StatusBadRequest, "Invalid or expired state")

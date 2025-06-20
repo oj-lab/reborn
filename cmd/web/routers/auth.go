@@ -9,9 +9,8 @@ import (
 func RegisterAuthRoutes(e *echo.Echo) {
 	baseGroup := e.Group("/auth")
 	{
-		// TODO: Remove `provider` here, use OAuth state and store provider type in it
-		baseGroup.GET("/:provider/login", handlers.Login)
-		baseGroup.GET("/:provider/callback", handlers.Callback)
+		baseGroup.GET("/login", handlers.Login)
+		baseGroup.GET("/callback", handlers.Callback)
 
 		baseGroup.POST("/login", handlers.LoginWithPassword)
 		baseGroup.POST("/register", handlers.RegisterWithPassword)
