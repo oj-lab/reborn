@@ -30,7 +30,7 @@ func getOauthStateKey(state string) string {
 
 func Login(ctx echo.Context) error {
 	providerName := ctx.Param("provider")
-	provider, err := oauth.GetProvider(providerName)
+	provider, err := oauth.GetProvider(providerName, userServiceClient)
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
@@ -50,7 +50,7 @@ func Login(ctx echo.Context) error {
 
 func Callback(ctx echo.Context) error {
 	providerName := ctx.Param("provider")
-	provider, err := oauth.GetProvider(providerName)
+	provider, err := oauth.GetProvider(providerName, userServiceClient)
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
@@ -76,22 +76,12 @@ func Callback(ctx echo.Context) error {
 		return ctx.String(http.StatusInternalServerError, "Failed to get user info: "+err.Error())
 	}
 
-	if providerName != "github" {
-		return ctx.String(http.StatusBadRequest, "Unsupported provider")
-	}
-
-	req := &userpb.GithubLoginRequest{
-		GithubId: userInfo.ID,
-		Name:     userInfo.Name,
-		Email:    userInfo.Email,
-	}
-
-	loginResp, err := userServiceClient.GithubLogin(context.Background(), req)
+	user, err := provider.Login(context.Background(), userInfo)
 	if err != nil {
 		return ctx.String(http.StatusInternalServerError, "Failed to login: "+err.Error())
 	}
 
-	sessionID, err := sessionManager.Create(context.Background(), uint(loginResp.User.Id), session.DefaultSessionTTL)
+	sessionID, err := sessionManager.Create(context.Background(), uint(user.Id), session.DefaultSessionTTL)
 	if err != nil {
 		return ctx.String(http.StatusInternalServerError, "Failed to create session: "+err.Error())
 	}

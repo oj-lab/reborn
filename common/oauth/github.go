@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/oj-lab/reborn/common/app"
+	userpb "github.com/oj-lab/reborn/protobuf/user"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 )
@@ -26,18 +27,35 @@ func newGithubOAuthConfig() *oauth2.Config {
 	}
 }
 
-func NewGithubProvider() Provider {
+func NewGithubProvider(userServiceClient userpb.UserServiceClient) Provider {
 	if githubOAuthConfig == nil {
 		githubOAuthConfig = newGithubOAuthConfig()
 	}
 
 	return &GithubProvider{
-		config: githubOAuthConfig,
+		config:            githubOAuthConfig,
+		userServiceClient: userServiceClient,
 	}
 }
 
 type GithubProvider struct {
-	config *oauth2.Config
+	config            *oauth2.Config
+	userServiceClient userpb.UserServiceClient
+}
+
+func (p *GithubProvider) Login(ctx context.Context, userInfo *UserInfo) (*userpb.User, error) {
+	req := &userpb.GithubLoginRequest{
+		GithubId: userInfo.ID,
+		Name:     userInfo.Name,
+		Email:    userInfo.Email,
+	}
+
+	loginResp, err := p.userServiceClient.GithubLogin(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return loginResp.User, nil
 }
 
 func (p *GithubProvider) GithubLoginEnabled() bool {
@@ -79,6 +97,11 @@ func (p *GithubProvider) GetUserInfo(token *oauth2.Token) (*UserInfo, error) {
 		return nil, fmt.Errorf("failed to parse user info: %w", err)
 	}
 
+	// In Github, the Name field might be empty. Use Login as a fallback.
+	if githubUser.Name == "" {
+		githubUser.Name = githubUser.Login
+	}
+
 	// If email is not available in user info, get from emails endpoint
 	if githubUser.Email == "" {
 		emailsResp, err := client.Get("https://api.github.com/user/emails")
@@ -109,7 +132,7 @@ func (p *GithubProvider) GetUserInfo(token *oauth2.Token) (*UserInfo, error) {
 	}
 
 	return &UserInfo{
-		ID:        fmt.Sprintf("github_%d", githubUser.ID),
+		ID:        fmt.Sprintf("%d", githubUser.ID),
 		Name:      githubUser.Name,
 		Email:     githubUser.Email,
 		AvatarURL: githubUser.AvatarURL,

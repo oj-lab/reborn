@@ -25,4 +25,5 @@ type Provider interface {
 	GetAuthURL(state string) (string, error)
 	Exchange(ctx context.Context, code string) (*oauth2.Token, error)
 	GetUserInfo(token *oauth2.Token) (*UserInfo, error)
+	Login(ctx context.Context, userInfo *UserInfo) (*userpb.User, error)
 }
