@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/oj-lab/reborn/cmd/web/middleware"
 	"github.com/oj-lab/reborn/common/oauth"
 	"github.com/oj-lab/reborn/common/redis_client"
 	"github.com/oj-lab/reborn/common/session"
@@ -29,7 +30,7 @@ func getOauthStateKey(state string) string {
 }
 
 func Login(ctx echo.Context) error {
-	providerName := ctx.Param("provider")
+	providerName := ctx.QueryParam("provider")
 	provider, err := oauth.GetProvider(providerName, userServiceClient)
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
@@ -49,7 +50,7 @@ func Login(ctx echo.Context) error {
 }
 
 func Callback(ctx echo.Context) error {
-	providerName := ctx.Param("provider")
+	providerName := ctx.QueryParam("provider")
 	provider, err := oauth.GetProvider(providerName, userServiceClient)
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
@@ -170,13 +171,13 @@ func SetPassword(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "Invalid request")
 	}
 
-	userID, ok := c.Get("userID").(uint64)
-	if !ok || userID == 0 {
+	session, ok := c.Get(middleware.ContextKeyUserSession).(*session.Session)
+	if !ok || session == nil {
 		return c.String(http.StatusUnauthorized, "Invalid user ID from token")
 	}
 
 	grpcReq := &userpb.SetPasswordRequest{
-		UserId:   userID,
+		UserId:   uint64(session.UserID),
 		Password: req.Password,
 	}
 

@@ -88,6 +88,7 @@ func (s *UserService) CreateUser(ctx context.Context, req *userpb.CreateUserRequ
 	return &emptypb.Empty{}, nil
 }
 
+// TODO: Remove this and replace it with a more common method
 func (s *UserService) GithubLogin(ctx context.Context, req *userpb.GithubLoginRequest) (*userpb.LoginResponse, error) {
 	if req.GetGithubId() == "" || req.GetEmail() == "" {
 		return nil, errors.New("github id and email are required")

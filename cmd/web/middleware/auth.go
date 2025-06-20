@@ -7,13 +7,18 @@ import (
 	"github.com/oj-lab/reborn/common/session"
 )
 
+const (
+	CookieUserSessionID   = "user_session_id"
+	ContextKeyUserSession = "user_session"
+)
+
 var (
 	sessionManager = session.NewManager()
 )
 
 func Auth(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		cookie, err := c.Cookie("session_id")
+		cookie, err := c.Cookie(CookieUserSessionID)
 		if err != nil {
 			return c.String(http.StatusUnauthorized, "Missing session cookie")
 		}
@@ -23,12 +28,11 @@ func Auth(next echo.HandlerFunc) echo.HandlerFunc {
 		if err != nil {
 			return c.String(http.StatusInternalServerError, "Failed to get session")
 		}
-
 		if session == nil {
 			return c.String(http.StatusUnauthorized, "Invalid session")
 		}
 
-		c.Set("userID", uint64(session.UserID))
+		c.Set(ContextKeyUserSession, session)
 		return next(c)
 	}
 }

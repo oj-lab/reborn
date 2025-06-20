@@ -39,7 +39,9 @@ func NewGithubProvider(userServiceClient userpb.UserServiceClient) Provider {
 }
 
 type GithubProvider struct {
-	config            *oauth2.Config
+	config *oauth2.Config
+	// TODO: Remove this client
+	// If OAuth need to planted in UserService, we should move this package to user_service
 	userServiceClient userpb.UserServiceClient
 }
 

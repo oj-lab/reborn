@@ -3,6 +3,7 @@ package session
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
@@ -27,7 +28,7 @@ func NewManager() *Manager {
 type Session struct {
 	ID     string
 	UserID uint
-	Data   map[string]interface{}
+	Data   map[string]any
 }
 
 func (m *Manager) Create(ctx context.Context, userID uint, ttl time.Duration) (string, error) {
@@ -35,9 +36,10 @@ func (m *Manager) Create(ctx context.Context, userID uint, ttl time.Duration) (s
 	session := &Session{
 		ID:     sessionID,
 		UserID: userID,
-		Data:   make(map[string]interface{}),
+		Data:   make(map[string]any),
 	}
 
+	// TODO: Use Redis JSON support if available
 	val, err := json.Marshal(session)
 	if err != nil {
 		return "", err
@@ -59,9 +61,9 @@ func (m *Manager) Get(ctx context.Context, sessionID string) (*Session, error) {
 		return nil, err
 	}
 
-	if err := m.rdb.Expire(ctx, sessionID, m.ttl).Err(); err != nil {
-		// If refreshing fails, we can log the error but we don't want to fail the request.
-		// The user is still authenticated for this request.
+	err = m.rdb.Expire(ctx, sessionID, m.ttl).Err()
+	if err != nil {
+		slog.WarnContext(ctx, "Failed to extend session TTL", "sessionID", sessionID, "error", err)
 	}
 
 	var session Session
