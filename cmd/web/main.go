@@ -14,13 +14,11 @@ const configKeyServerPort = "server.port"
 
 var port uint
 
-func init() {
+func main() {
 	cwd, _ := os.Getwd()
 	app.Init(cwd, "web")
 	port = app.Config().GetUint(configKeyServerPort)
-}
 
-func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())

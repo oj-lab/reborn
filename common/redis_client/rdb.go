@@ -14,14 +14,7 @@ const (
 
 var (
 	rdbInitMutex sync.Mutex
-	redisUrls    []string
-	password     string
 )
-
-func init() {
-	redisUrls = app.Config().GetStringSlice(redisUrlsConfigKey)
-	password = app.Config().GetString(redisPasswordConfigKey)
-}
 
 var redisClient redis.UniversalClient
 
@@ -32,6 +25,9 @@ func GetRDB() redis.UniversalClient {
 		if redisClient != nil {
 			return redisClient
 		}
+
+		redisUrls := app.Config().GetStringSlice(redisUrlsConfigKey)
+		password := app.Config().GetString(redisPasswordConfigKey)
 
 		if len(redisUrls) == 0 {
 			panic("No redis hosts configured")

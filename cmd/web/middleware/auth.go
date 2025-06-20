@@ -12,12 +12,9 @@ const (
 	ContextKeyUserSession = "user_session"
 )
 
-var (
-	sessionManager = session.NewManager()
-)
-
 func Auth(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		sessionManager := session.NewManager()
 		cookie, err := c.Cookie(CookieUserSessionID)
 		if err != nil {
 			return c.String(http.StatusUnauthorized, "Missing session cookie")

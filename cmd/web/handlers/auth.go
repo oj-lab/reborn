@@ -19,16 +19,12 @@ const (
 	oauthStateTTL = 10 * time.Minute
 )
 
-var (
-	sessionManager = session.NewManager()
-	rdb            = redis_client.GetRDB()
-)
-
 func getOauthStateKey(state string) string {
 	return fmt.Sprintf("oauth:state:%s", state)
 }
 
 func Login(ctx echo.Context) error {
+	rdb := redis_client.GetRDB()
 	providerName := ctx.QueryParam("provider")
 	if providerName == "" {
 		return ctx.String(http.StatusBadRequest, "provider is required")
@@ -58,6 +54,8 @@ func Login(ctx echo.Context) error {
 }
 
 func Callback(ctx echo.Context) error {
+	rdb := redis_client.GetRDB()
+	sessionManager := session.NewManager()
 	encodedState := ctx.QueryParam("state")
 	state, err := oauth.DecodeState(encodedState)
 	if err != nil {
@@ -116,6 +114,7 @@ type PasswordLoginRequest struct {
 }
 
 func LoginWithPassword(c echo.Context) error {
+	sessionManager := session.NewManager()
 	req := new(PasswordLoginRequest)
 	if err := c.Bind(req); err != nil {
 		return c.String(http.StatusBadRequest, "Invalid request")
