@@ -14,5 +14,6 @@ service UserService {
     rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
     rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
     rpc Login(LoginRequest) returns (LoginResponse);
+    rpc GithubLogin(GithubLoginRequest) returns (LoginResponse);
     rpc SetPassword(SetPasswordRequest) returns (SetPasswordResponse);
 }

@@ -11,7 +11,9 @@ import (
 type UserRepository interface {
 	CreateUser(ctx context.Context, user *userpb.CreateUserRequest) error
 	GetUserByID(ctx context.Context, id uint64) (*userpb.User, error)
+	GetUserModelByID(ctx context.Context, id uint64) (*UserModel, error)
 	GetUserByEmail(ctx context.Context, email string) (*UserModel, error)
+	GetUserByGithubID(ctx context.Context, githubID string) (*UserModel, error)
 	UpdateUser(ctx context.Context, user *userpb.UpdateUserRequest) error
 	SetPassword(ctx context.Context, userID uint64, passwordHash string) error
 	DeleteUser(ctx context.Context, id uint64) error
@@ -49,11 +51,12 @@ func (role *UserRole) FromPb(pbRole userpb.UserRole) {
 
 type UserModel struct {
 	gorm.Model
-	Name        string
-	Email       string
-	Password    *string // Password hash, optional
-	LastLoginAt *time.Time
-	Role        UserRole
+	Name           string
+	Email          string
+	HashedPassword *string `gorm:"column:hashed_password"`
+	GithubID       *string `gorm:"column:github_id;unique"`
+	LastLoginAt    *time.Time
+	Role           UserRole
 }
 
 func (UserModel) TableName() string {
@@ -62,10 +65,12 @@ func (UserModel) TableName() string {
 
 func (m UserModel) ToPb() *userpb.User {
 	return &userpb.User{
-		Id:    uint64(m.ID),
-		Name:  m.Name,
-		Email: m.Email,
-		Role:  m.Role.ToPb(),
+		Id:             uint64(m.ID),
+		Name:           m.Name,
+		Email:          m.Email,
+		Role:           m.Role.ToPb(),
+		HashedPassword: m.HashedPassword,
+		GithubId:       m.GithubID,
 	}
 }
 
@@ -74,6 +79,8 @@ func (m *UserModel) FromPb(user *userpb.User) {
 	m.Name = user.Name
 	m.Email = user.Email
 	m.Role.FromPb(user.Role)
+	m.HashedPassword = user.HashedPassword
+	m.GithubID = user.GithubId
 }
 
 type GormUserRepository struct {
@@ -91,9 +98,12 @@ func (r *GormUserRepository) CreateUser(ctx context.Context, user *userpb.Create
 	}
 	model.Role.FromPb(user.Role)
 
-	// If password hash is provided, set password
 	if user.Password != nil && *user.Password != "" {
-		model.Password = user.Password
+		model.HashedPassword = user.Password
+	}
+
+	if user.GithubId != nil && *user.GithubId != "" {
+		model.GithubID = user.GithubId
 	}
 
 	return r.db.WithContext(ctx).Create(model).Error
@@ -107,6 +117,14 @@ func (r *GormUserRepository) GetUserByID(ctx context.Context, id uint64) (*userp
 	return model.ToPb(), nil
 }
 
+func (r *GormUserRepository) GetUserModelByID(ctx context.Context, id uint64) (*UserModel, error) {
+	model := &UserModel{}
+	if err := r.db.WithContext(ctx).Where("id = ?", id).First(model).Error; err != nil {
+		return nil, err
+	}
+	return model, nil
+}
+
 func (r *GormUserRepository) GetUserByEmail(ctx context.Context, email string) (*UserModel, error) {
 	model := &UserModel{}
 	if err := r.db.WithContext(ctx).Where("email = ?", email).First(model).Error; err != nil {
@@ -115,25 +133,49 @@ func (r *GormUserRepository) GetUserByEmail(ctx context.Context, email string) (
 	return model, nil
 }
 
-func (r *GormUserRepository) UpdateUser(ctx context.Context, user *userpb.UpdateUserRequest) error {
+func (r *GormUserRepository) GetUserByGithubID(ctx context.Context, githubID string) (*UserModel, error) {
 	model := &UserModel{}
-	model.ID = uint(user.Id)
+	if err := r.db.WithContext(ctx).Where("github_id = ?", githubID).First(model).Error; err != nil {
+		return nil, err
+	}
+	return model, nil
+}
+
+func (r *GormUserRepository) UpdateUser(ctx context.Context, user *userpb.UpdateUserRequest) error {
+	updates := make(map[string]any)
 	if user.Name != nil {
-		model.Name = *user.Name
+		updates["name"] = *user.Name
 	}
 	if user.Email != nil {
-		model.Email = *user.Email
+		updates["email"] = *user.Email
 	}
 	if user.Role != nil {
-		model.Role.FromPb(*user.Role)
+		var role UserRole
+		role.FromPb(*user.Role)
+		updates["role"] = role
 	}
-	return r.db.WithContext(ctx).Save(model).Error
+	if user.Password != nil {
+		if *user.Password == "" {
+			updates["hashed_password"] = gorm.Expr("NULL")
+		} else {
+			updates["hashed_password"] = *user.Password
+		}
+	}
+	if user.GithubId != nil {
+		if *user.GithubId == "" {
+			updates["github_id"] = gorm.Expr("NULL")
+		} else {
+			updates["github_id"] = *user.GithubId
+		}
+	}
+
+	return r.db.WithContext(ctx).Model(&UserModel{}).Where("id = ?", user.Id).Updates(updates).Error
 }
 
 func (r *GormUserRepository) SetPassword(ctx context.Context, userID uint64, passwordHash string) error {
 	return r.db.WithContext(ctx).Model(&UserModel{}).
 		Where("id = ?", userID).
-		Update("password", passwordHash).Error
+		Update("hashed_password", passwordHash).Error
 }
 
 func (r *GormUserRepository) DeleteUser(ctx context.Context, id uint64) error {

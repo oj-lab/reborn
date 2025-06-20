@@ -14,6 +14,8 @@ message User {
     string name = 2;
     string email = 3;
     UserRole role = 4;
+    optional string github_id = 5;
+    optional string hashed_password = 6;
 }
 
 message CreateUserRequest {
@@ -21,6 +23,7 @@ message CreateUserRequest {
     string email = 2;
     UserRole role = 3;
     optional string password = 4; // Password, optional, encrypted storage
+    optional string github_id = 5;
 }
 
 message CreateUserResponse {
@@ -39,6 +42,8 @@ message UpdateUserRequest {
     optional string name = 2;
     optional string email = 3;
     optional UserRole role = 4;
+    optional string password = 5;
+    optional string github_id = 6;
 }
 
 message UpdateUserResponse {
@@ -79,4 +84,10 @@ message SetPasswordRequest {
 }
 
 message SetPasswordResponse {
+}
+
+message GithubLoginRequest {
+    string github_id = 1;
+    string email = 2;
+    string name = 3;
 }

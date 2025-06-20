@@ -40,7 +40,19 @@ export interface UserpbCreateUserRequest {
      * @type {string}
      * @memberof UserpbCreateUserRequest
      */
+    'github_id'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserpbCreateUserRequest
+     */
     'name'?: string;
+    /**
+     * Password, optional, encrypted storage
+     * @type {string}
+     * @memberof UserpbCreateUserRequest
+     */
+    'password'?: string;
     /**
      * 
      * @type {UserpbUserRole}
