@@ -33,7 +33,7 @@ func (s *UserService) CreateUser(ctx context.Context, req *userpb.CreateUserRequ
 	}
 
 	if (req.Password == nil || *req.Password == "") && (req.GithubId == nil || *req.GithubId == "") {
-		return nil, errors.New("github_id or password is required for new user registration")
+		return nil, errors.New("either a GitHub ID or a password must be provided for new user registration")
 	}
 
 	// Check if user already exists
