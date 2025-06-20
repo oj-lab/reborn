@@ -1,38 +1,34 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/labstack/echo/v4"
+	"github.com/oj-lab/reborn/common/session"
+)
+
+var (
+	sessionManager = session.NewManager()
 )
 
 func Auth(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		authHeader := c.Request().Header.Get("Authorization")
-		if authHeader == "" {
-			return c.String(http.StatusUnauthorized, "Missing Authorization header")
+		cookie, err := c.Cookie("session_id")
+		if err != nil {
+			return c.String(http.StatusUnauthorized, "Missing session cookie")
+		}
+		sessionID := cookie.Value
+
+		session, err := sessionManager.Get(c.Request().Context(), sessionID)
+		if err != nil {
+			return c.String(http.StatusInternalServerError, "Failed to get session")
 		}
 
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			return c.String(http.StatusUnauthorized, "Invalid Authorization header format")
+		if session == nil {
+			return c.String(http.StatusUnauthorized, "Invalid session")
 		}
 
-		token := parts[1]
-		// TODO: In a real application, you would validate the token (e.g., JWT) here.
-		// For this project, we are using a simple token format: user_{id}_token.
-		var userID uint64
-		if _, err := fmt.Sscanf(token, "user_%d_token", &userID); err != nil {
-			return c.String(http.StatusUnauthorized, "Invalid token")
-		}
-
-		if userID == 0 {
-			return c.String(http.StatusUnauthorized, "Invalid user ID in token")
-		}
-
-		c.Set("userID", userID)
+		c.Set("userID", uint64(session.UserID))
 		return next(c)
 	}
 }

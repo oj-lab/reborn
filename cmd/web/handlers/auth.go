@@ -2,16 +2,32 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/oj-lab/reborn/common/oauth"
+	"github.com/oj-lab/reborn/common/redis_client"
+	"github.com/oj-lab/reborn/common/session"
 	userpb "github.com/oj-lab/reborn/protobuf/user"
+	"github.com/redis/go-redis/v9"
 )
 
 const (
-	oauthStateString = "random" // TODO: Should be a random string
+	sessionTTL    = 24 * time.Hour
+	oauthStateTTL = 10 * time.Minute
 )
+
+var (
+	sessionManager = session.NewManager()
+	rdb            = redis_client.GetRDB()
+)
+
+func getOauthStateKey(state string) string {
+	return fmt.Sprintf("oauth:state:%s", state)
+}
 
 func Login(ctx echo.Context) error {
 	providerName := ctx.Param("provider")
@@ -20,7 +36,13 @@ func Login(ctx echo.Context) error {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
-	url, err := provider.GetAuthURL(oauthStateString)
+	oauthState := uuid.New().String()
+	stateKey := getOauthStateKey(oauthState)
+	if err := rdb.Set(ctx.Request().Context(), stateKey, "true", oauthStateTTL).Err(); err != nil {
+		return ctx.String(http.StatusInternalServerError, "failed to save state")
+	}
+
+	url, err := provider.GetAuthURL(oauthState)
 	if err != nil {
 		return ctx.String(http.StatusInternalServerError, err.Error())
 	}
@@ -35,9 +57,14 @@ func Callback(ctx echo.Context) error {
 	}
 
 	state := ctx.QueryParam("state")
-	if state != oauthStateString {
-		return ctx.String(http.StatusBadRequest, "Invalid state")
+	stateKey := getOauthStateKey(state)
+	err = rdb.Get(ctx.Request().Context(), stateKey).Err()
+	if err == redis.Nil {
+		return ctx.String(http.StatusBadRequest, "Invalid or expired state")
+	} else if err != nil {
+		return ctx.String(http.StatusInternalServerError, "failed to verify state")
 	}
+	rdb.Del(ctx.Request().Context(), stateKey)
 
 	code := ctx.QueryParam("code")
 	token, err := provider.Exchange(context.Background(), code)
@@ -65,8 +92,20 @@ func Callback(ctx echo.Context) error {
 		return ctx.String(http.StatusInternalServerError, "Failed to login: "+err.Error())
 	}
 
-	// TODO: Login user and set session
-	return ctx.JSON(http.StatusOK, loginResp)
+	sessionID, err := sessionManager.Create(context.Background(), uint(loginResp.User.Id), sessionTTL)
+	if err != nil {
+		return ctx.String(http.StatusInternalServerError, "Failed to create session: "+err.Error())
+	}
+
+	cookie := &http.Cookie{
+		Name:     "session_id",
+		Value:    sessionID,
+		Expires:  time.Now().Add(sessionTTL),
+		HttpOnly: true,
+	}
+	ctx.SetCookie(cookie)
+
+	return ctx.JSON(http.StatusOK, map[string]string{"message": "login success"})
 }
 
 type PasswordLoginRequest struct {
@@ -90,7 +129,20 @@ func LoginWithPassword(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "Failed to login: "+err.Error())
 	}
 
-	return c.JSON(http.StatusOK, resp)
+	sessionID, err := sessionManager.Create(context.Background(), uint(resp.User.Id), sessionTTL)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "Failed to create session: "+err.Error())
+	}
+
+	cookie := &http.Cookie{
+		Name:     "session_id",
+		Value:    sessionID,
+		Expires:  time.Now().Add(sessionTTL),
+		HttpOnly: true,
+	}
+	c.SetCookie(cookie)
+
+	return c.JSON(http.StatusOK, map[string]string{"message": "login success"})
 }
 
 type PasswordRegisterRequest struct {
