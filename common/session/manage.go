@@ -39,13 +39,15 @@ func (m *Manager) Create(ctx context.Context, userID uint, ttl time.Duration) (s
 		Data:   make(map[string]any),
 	}
 
-	// TODO: Use Redis JSON support if available
-	val, err := json.Marshal(session)
-	if err != nil {
+	if err := m.rdb.JSONSet(ctx, sessionID, ".", session).Err(); err != nil {
 		return "", err
 	}
 
-	if err := m.rdb.Set(ctx, sessionID, val, ttl).Err(); err != nil {
+	if err := m.rdb.Expire(ctx, sessionID, ttl).Err(); err != nil {
+		// Clean up the key if we fail to set TTL, to avoid session staying forever.
+		if delErr := m.rdb.Del(ctx, sessionID).Err(); delErr != nil {
+			slog.WarnContext(ctx, "Failed to delete session key after failing to set TTL", "sessionID", sessionID, "error", delErr)
+		}
 		return "", err
 	}
 
@@ -53,7 +55,7 @@ func (m *Manager) Create(ctx context.Context, userID uint, ttl time.Duration) (s
 }
 
 func (m *Manager) Get(ctx context.Context, sessionID string) (*Session, error) {
-	val, err := m.rdb.Get(ctx, sessionID).Bytes()
+	val, err := m.rdb.JSONGet(ctx, sessionID, ".").Result()
 	if err != nil {
 		if err == redis.Nil {
 			return nil, nil // Session not found
@@ -66,12 +68,16 @@ func (m *Manager) Get(ctx context.Context, sessionID string) (*Session, error) {
 		slog.WarnContext(ctx, "Failed to extend session TTL", "sessionID", sessionID, "error", err)
 	}
 
-	var session Session
-	if err := json.Unmarshal(val, &session); err != nil {
+	var sessions []Session
+	if err := json.Unmarshal([]byte(val), &sessions); err != nil {
 		return nil, err
 	}
 
-	return &session, nil
+	if len(sessions) == 0 {
+		return nil, nil
+	}
+
+	return &sessions[0], nil
 }
 
 func (m *Manager) Delete(ctx context.Context, sessionID string) error {
