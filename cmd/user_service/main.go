@@ -19,6 +19,7 @@ const configKeyServerPort = "server.port"
 var (
 	port          uint
 	publicMethods map[string]bool
+	acl           map[string]map[userpb.UserRole]bool
 )
 
 func init() {
@@ -32,6 +33,21 @@ func init() {
 	publicMethods = make(map[string]bool, len(methods))
 	for _, method := range methods {
 		publicMethods[method] = true
+	}
+
+	// Load ACL
+	acl = make(map[string]map[userpb.UserRole]bool)
+	aclConfig := app.Config().GetStringMapStringSlice("auth.acl")
+	for method, roles := range aclConfig {
+		roleMap := make(map[userpb.UserRole]bool, len(roles))
+		for _, roleStr := range roles {
+			roleEnum, ok := userpb.UserRole_value[roleStr]
+			if !ok {
+				log.Fatalf("invalid role '%s' in ACL config for method '%s'", roleStr, method)
+			}
+			roleMap[userpb.UserRole(roleEnum)] = true
+		}
+		acl[method] = roleMap
 	}
 }
 

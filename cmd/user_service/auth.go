@@ -103,6 +103,13 @@ func AuthInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, h
 		return nil, err
 	}
 
+	// Authorization check
+	if requiredRoles, ok := acl[info.FullMethod]; ok {
+		if !requiredRoles[claims.Role] {
+			return nil, status.Errorf(codes.PermissionDenied, "you do not have permission to perform this action")
+		}
+	}
+
 	// Store claims in context for use in RPC methods
 	newCtx := context.WithValue(ctx, claimsContextKey, claims)
 

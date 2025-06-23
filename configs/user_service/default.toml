@@ -10,9 +10,13 @@ expires_in_hours = 72
 [auth]
 public_methods = [
     "/user.UserService/Login",
-    "/user.UserService/GithubLogin",
+    "/user.UserService/OAuthLogin",
     "/user.UserService/CreateUser"
 ]
+
+[auth.acl]
+"/user.UserService/DeleteUser" = ["ADMIN"]
+"/user.UserService/ListUsers" = ["ADMIN"]
 
 [gorm_client.database]
 driver = "postgres"
