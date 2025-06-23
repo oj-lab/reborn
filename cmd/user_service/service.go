@@ -11,6 +11,8 @@ import (
 
 	userpb "github.com/oj-lab/reborn/protobuf/user"
 	"golang.org/x/crypto/argon2"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"gorm.io/gorm"
 )
@@ -102,7 +104,10 @@ func (s *UserService) GithubLogin(ctx context.Context, req *userpb.GithubLoginRe
 
 	if user != nil {
 		// User found, generate token and log them in
-		token := fmt.Sprintf("user_%d_token", user.ID)
+		token, err := GenerateJWT(user.ToPb())
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate token: %w", err)
+		}
 		return &userpb.LoginResponse{
 			User:  user.ToPb(),
 			Token: token,
@@ -126,7 +131,10 @@ func (s *UserService) GithubLogin(ctx context.Context, req *userpb.GithubLoginRe
 			return nil, fmt.Errorf("failed to link github id: %w", err)
 		}
 		// Generate token and log them in
-		token := fmt.Sprintf("user_%d_token", user.ID)
+		token, err := GenerateJWT(user.ToPb())
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate token: %w", err)
+		}
 		user.GithubID = &req.GithubId // manually update for response
 		return &userpb.LoginResponse{
 			User:  user.ToPb(),
@@ -152,7 +160,10 @@ func (s *UserService) GithubLogin(ctx context.Context, req *userpb.GithubLoginRe
 		return nil, fmt.Errorf("failed to fetch newly created user: %w", err)
 	}
 
-	token := fmt.Sprintf("user_%d_token", newUser.ID)
+	token, err := GenerateJWT(newUser.ToPb())
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate token: %w", err)
+	}
 	return &userpb.LoginResponse{
 		User:  newUser.ToPb(),
 		Token: token,
@@ -331,7 +342,10 @@ func (s *UserService) Login(ctx context.Context, req *userpb.LoginRequest) (*use
 	}
 
 	// Generate simple token (should use JWT in production)
-	token := fmt.Sprintf("user_%d_token", userModel.ID)
+	token, err := GenerateJWT(userModel.ToPb())
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate JWT: %w", err)
+	}
 
 	return &userpb.LoginResponse{
 		User:  userModel.ToPb(),
@@ -340,27 +354,18 @@ func (s *UserService) Login(ctx context.Context, req *userpb.LoginRequest) (*use
 }
 
 func (s *UserService) SetPassword(ctx context.Context, req *userpb.SetPasswordRequest) (*userpb.SetPasswordResponse, error) {
-	if req.GetUserId() == 0 || req.GetPassword() == "" {
-		return nil, errors.New("user_id and password are required")
+	claims, ok := ctx.Value(claimsContextKey).(*Claims)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "invalid token claims")
 	}
 
-	// Check if user exists
-	_, err := s.repo.GetUserByID(ctx, req.GetUserId())
-	if err != nil {
-		return nil, errors.New("user not found")
-	}
-
-	// Hash password
 	hashedPassword, err := HashPassword(req.GetPassword())
 	if err != nil {
-		return nil, fmt.Errorf("failed to hash password: %v", err)
+		return nil, err
 	}
-
-	// Update password
-	err = s.repo.SetPassword(ctx, req.GetUserId(), hashedPassword)
+	err = s.repo.SetPassword(ctx, claims.UserID, hashedPassword)
 	if err != nil {
-		return nil, fmt.Errorf("failed to set password: %v", err)
+		return nil, err
 	}
-
 	return &userpb.SetPasswordResponse{}, nil
 }

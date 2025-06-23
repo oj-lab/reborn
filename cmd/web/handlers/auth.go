@@ -87,12 +87,12 @@ func Callback(ctx echo.Context) error {
 		return ctx.String(http.StatusInternalServerError, "Failed to get user info: "+err.Error())
 	}
 
-	user, err := provider.Login(context.Background(), userInfo)
+	loginResp, err := provider.Login(context.Background(), userInfo)
 	if err != nil {
 		return ctx.String(http.StatusInternalServerError, "Failed to login: "+err.Error())
 	}
 
-	sessionID, err := sessionManager.Create(context.Background(), uint(user.Id), session.DefaultSessionTTL)
+	sessionID, err := sessionManager.Create(context.Background(), uint(loginResp.User.Id), loginResp.Token, session.DefaultSessionTTL)
 	if err != nil {
 		return ctx.String(http.StatusInternalServerError, "Failed to create session: "+err.Error())
 	}
@@ -130,7 +130,7 @@ func LoginWithPassword(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "Failed to login: "+err.Error())
 	}
 
-	sessionID, err := sessionManager.Create(context.Background(), uint(resp.User.Id), session.DefaultSessionTTL)
+	sessionID, err := sessionManager.Create(context.Background(), uint(resp.User.Id), resp.Token, session.DefaultSessionTTL)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Failed to create session: "+err.Error())
 	}
@@ -182,17 +182,16 @@ func SetPassword(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "Invalid request")
 	}
 
-	session, ok := c.Get(middleware.ContextKeyUserSession).(*session.Session)
-	if !ok || session == nil {
-		return c.String(http.StatusUnauthorized, "Invalid user ID from token")
+	ctx, err := middleware.GetAuthenticatedContext(c)
+	if err != nil {
+		return c.String(http.StatusUnauthorized, "Failed to get authenticated context: "+err.Error())
 	}
 
 	grpcReq := &userpb.SetPasswordRequest{
-		UserId:   uint64(session.UserID),
 		Password: req.Password,
 	}
 
-	_, err := userServiceClient.SetPassword(context.Background(), grpcReq)
+	_, err = userServiceClient.SetPassword(ctx, grpcReq)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Failed to set password: "+err.Error())
 	}

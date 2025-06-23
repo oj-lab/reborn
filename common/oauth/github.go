@@ -45,19 +45,14 @@ type GithubProvider struct {
 	userServiceClient userpb.UserServiceClient
 }
 
-func (p *GithubProvider) Login(ctx context.Context, userInfo *UserInfo) (*userpb.User, error) {
+func (p *GithubProvider) Login(ctx context.Context, userInfo *UserInfo) (*userpb.LoginResponse, error) {
 	req := &userpb.GithubLoginRequest{
 		GithubId: userInfo.ID,
 		Name:     userInfo.Name,
 		Email:    userInfo.Email,
 	}
 
-	loginResp, err := p.userServiceClient.GithubLogin(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return loginResp.User, nil
+	return p.userServiceClient.GithubLogin(ctx, req)
 }
 
 func (p *GithubProvider) GithubLoginEnabled() bool {

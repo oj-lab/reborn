@@ -28,14 +28,16 @@ func NewManager() *Manager {
 type Session struct {
 	ID     string
 	UserID uint
+	JWT    string
 	Data   map[string]any
 }
 
-func (m *Manager) Create(ctx context.Context, userID uint, ttl time.Duration) (string, error) {
+func (m *Manager) Create(ctx context.Context, userID uint, jwt string, ttl time.Duration) (string, error) {
 	sessionID := uuid.New().String()
 	session := &Session{
 		ID:     sessionID,
 		UserID: userID,
+		JWT:    jwt,
 		Data:   make(map[string]any),
 	}
 

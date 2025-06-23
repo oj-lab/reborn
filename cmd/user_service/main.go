@@ -16,12 +16,23 @@ import (
 
 const configKeyServerPort = "server.port"
 
-var port uint
+var (
+	port          uint
+	publicMethods map[string]bool
+)
 
 func init() {
 	cwd, _ := os.Getwd()
 	app.Init(cwd, "user_service")
 	port = app.Config().GetUint(configKeyServerPort)
+	jwtSecret = []byte(app.Config().GetString("jwt.secret"))
+
+	// Load public methods for auth interceptor
+	methods := app.Config().GetStringSlice("auth.public_methods")
+	publicMethods = make(map[string]bool, len(methods))
+	for _, method := range methods {
+		publicMethods[method] = true
+	}
 }
 
 func main() {
@@ -31,15 +42,17 @@ func main() {
 	repo := NewGormUserRepository(db)
 	service := NewUserService(repo)
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(AuthInterceptor),
+	)
 	userpb.RegisterUserServiceServer(grpcServer, service)
-
 	reflection.Register(grpcServer)
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
+
 	slog.Info("user service started", "port", port)
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)

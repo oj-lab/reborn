@@ -2,6 +2,18 @@
 port = 50051
 
 
+[jwt]
+secret = "DtVrEsDBH7kkZL1AjLpXHDvDT7RAkHWbGOO1jPS13rU="
+issuer = "oj-lab-api"
+expires_in_hours = 72
+
+[auth]
+public_methods = [
+    "/user.UserService/Login",
+    "/user.UserService/GithubLogin",
+    "/user.UserService/CreateUser"
+]
+
 [gorm_client.database]
 driver = "postgres"
 host = "localhost"
