@@ -90,82 +90,23 @@ func (s *UserService) CreateUser(ctx context.Context, req *userpb.CreateUserRequ
 	return &emptypb.Empty{}, nil
 }
 
-// TODO: Remove this and replace it with a more common method
-func (s *UserService) GithubLogin(ctx context.Context, req *userpb.GithubLoginRequest) (*userpb.LoginResponse, error) {
-	if req.GetGithubId() == "" || req.GetEmail() == "" {
-		return nil, errors.New("github id and email are required")
+func (s *UserService) OAuthLogin(ctx context.Context, req *userpb.OAuthLoginRequest) (*userpb.LoginResponse, error) {
+	if req.GetProvider() == "" || req.GetProviderUserId() == "" || req.GetEmail() == "" {
+		return nil, status.Error(codes.InvalidArgument, "provider, provider_user_id, and email are required")
 	}
 
-	// Case 1: User exists with this github_id
-	user, err := s.repo.GetUserByGithubID(ctx, req.GetGithubId())
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, fmt.Errorf("failed to get user by github id: %w", err)
-	}
-
-	if user != nil {
-		// User found, generate token and log them in
-		token, err := GenerateJWT(user.ToPb())
-		if err != nil {
-			return nil, fmt.Errorf("failed to generate token: %w", err)
-		}
-		return &userpb.LoginResponse{
-			User:  user.ToPb(),
-			Token: token,
-		}, nil
-	}
-
-	// Case 2: No user with github_id, check if email exists
-	user, err = s.repo.GetUserByEmail(ctx, req.GetEmail())
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, fmt.Errorf("failed to get user by email: %w", err)
-	}
-
-	if user != nil {
-		// User with this email exists, link the github_id
-		updateReq := &userpb.UpdateUserRequest{
-			Id:       uint64(user.ID),
-			GithubId: &req.GithubId,
-		}
-		err := s.repo.UpdateUser(ctx, updateReq)
-		if err != nil {
-			return nil, fmt.Errorf("failed to link github id: %w", err)
-		}
-		// Generate token and log them in
-		token, err := GenerateJWT(user.ToPb())
-		if err != nil {
-			return nil, fmt.Errorf("failed to generate token: %w", err)
-		}
-		user.GithubID = &req.GithubId // manually update for response
-		return &userpb.LoginResponse{
-			User:  user.ToPb(),
-			Token: token,
-		}, nil
-	}
-
-	// Case 3: New user, create them
-	createUserReq := &userpb.CreateUserRequest{
-		Name:     req.GetName(),
-		Email:    req.GetEmail(),
-		Role:     userpb.UserRole_USER, // Default role
-		GithubId: &req.GithubId,
-	}
-	err = s.repo.CreateUser(ctx, createUserReq)
+	user, err := s.repo.FindOrCreateUserByProvider(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create user: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to find or create user: %v", err)
 	}
 
-	// Fetch the newly created user to get their ID
-	newUser, err := s.repo.GetUserByGithubID(ctx, req.GetGithubId())
+	token, err := GenerateJWT(user.ToPb())
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch newly created user: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to generate token: %v", err)
 	}
 
-	token, err := GenerateJWT(newUser.ToPb())
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate token: %w", err)
-	}
 	return &userpb.LoginResponse{
-		User:  newUser.ToPb(),
+		User:  user.ToPb(),
 		Token: token,
 	}, nil
 }

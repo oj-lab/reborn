@@ -855,29 +855,30 @@ func (*SetPasswordResponse) Descriptor() ([]byte, []int) {
 	return file_user_messages_proto_rawDescGZIP(), []int{14}
 }
 
-type GithubLoginRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	GithubId      string                 `protobuf:"bytes,1,opt,name=github_id,json=githubId,proto3" json:"github_id,omitempty"`
-	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
-	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+type OAuthLoginRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Provider       string                 `protobuf:"bytes,1,opt,name=provider,proto3" json:"provider,omitempty"`
+	ProviderUserId string                 `protobuf:"bytes,2,opt,name=provider_user_id,json=providerUserId,proto3" json:"provider_user_id,omitempty"`
+	Email          string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
+	Name           string                 `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
-func (x *GithubLoginRequest) Reset() {
-	*x = GithubLoginRequest{}
+func (x *OAuthLoginRequest) Reset() {
+	*x = OAuthLoginRequest{}
 	mi := &file_user_messages_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GithubLoginRequest) String() string {
+func (x *OAuthLoginRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GithubLoginRequest) ProtoMessage() {}
+func (*OAuthLoginRequest) ProtoMessage() {}
 
-func (x *GithubLoginRequest) ProtoReflect() protoreflect.Message {
+func (x *OAuthLoginRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_user_messages_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -889,26 +890,33 @@ func (x *GithubLoginRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GithubLoginRequest.ProtoReflect.Descriptor instead.
-func (*GithubLoginRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use OAuthLoginRequest.ProtoReflect.Descriptor instead.
+func (*OAuthLoginRequest) Descriptor() ([]byte, []int) {
 	return file_user_messages_proto_rawDescGZIP(), []int{15}
 }
 
-func (x *GithubLoginRequest) GetGithubId() string {
+func (x *OAuthLoginRequest) GetProvider() string {
 	if x != nil {
-		return x.GithubId
+		return x.Provider
 	}
 	return ""
 }
 
-func (x *GithubLoginRequest) GetEmail() string {
+func (x *OAuthLoginRequest) GetProviderUserId() string {
+	if x != nil {
+		return x.ProviderUserId
+	}
+	return ""
+}
+
+func (x *OAuthLoginRequest) GetEmail() string {
 	if x != nil {
 		return x.Email
 	}
 	return ""
 }
 
-func (x *GithubLoginRequest) GetName() string {
+func (x *OAuthLoginRequest) GetName() string {
 	if x != nil {
 		return x.Name
 	}
@@ -981,11 +989,12 @@ const file_user_messages_proto_rawDesc = "" +
 	"\x05token\x18\x02 \x01(\tR\x05token\"0\n" +
 	"\x12SetPasswordRequest\x12\x1a\n" +
 	"\bpassword\x18\x01 \x01(\tR\bpassword\"\x15\n" +
-	"\x13SetPasswordResponse\"[\n" +
-	"\x12GithubLoginRequest\x12\x1b\n" +
-	"\tgithub_id\x18\x01 \x01(\tR\bgithubId\x12\x14\n" +
-	"\x05email\x18\x02 \x01(\tR\x05email\x12\x12\n" +
-	"\x04name\x18\x03 \x01(\tR\x04name*\x1f\n" +
+	"\x13SetPasswordResponse\"\x83\x01\n" +
+	"\x11OAuthLoginRequest\x12\x1a\n" +
+	"\bprovider\x18\x01 \x01(\tR\bprovider\x12(\n" +
+	"\x10provider_user_id\x18\x02 \x01(\tR\x0eproviderUserId\x12\x14\n" +
+	"\x05email\x18\x03 \x01(\tR\x05email\x12\x12\n" +
+	"\x04name\x18\x04 \x01(\tR\x04name*\x1f\n" +
 	"\bUserRole\x12\b\n" +
 	"\x04USER\x10\x00\x12\t\n" +
 	"\x05ADMIN\x10\x01B/Z-github.com/oj-lab/reborn/protobuf/user;userpbb\x06proto3"
@@ -1021,7 +1030,7 @@ var file_user_messages_proto_goTypes = []any{
 	(*LoginResponse)(nil),       // 13: user.LoginResponse
 	(*SetPasswordRequest)(nil),  // 14: user.SetPasswordRequest
 	(*SetPasswordResponse)(nil), // 15: user.SetPasswordResponse
-	(*GithubLoginRequest)(nil),  // 16: user.GithubLoginRequest
+	(*OAuthLoginRequest)(nil),   // 16: user.OAuthLoginRequest
 }
 var file_user_messages_proto_depIdxs = []int32{
 	0, // 0: user.User.role:type_name -> user.UserRole

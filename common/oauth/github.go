@@ -46,13 +46,14 @@ type GithubProvider struct {
 }
 
 func (p *GithubProvider) Login(ctx context.Context, userInfo *UserInfo) (*userpb.LoginResponse, error) {
-	req := &userpb.GithubLoginRequest{
-		GithubId: userInfo.ID,
-		Name:     userInfo.Name,
-		Email:    userInfo.Email,
+	req := &userpb.OAuthLoginRequest{
+		Provider:       "github",
+		ProviderUserId: userInfo.ID,
+		Name:           userInfo.Name,
+		Email:          userInfo.Email,
 	}
 
-	return p.userServiceClient.GithubLogin(ctx, req)
+	return p.userServiceClient.OAuthLogin(ctx, req)
 }
 
 func (p *GithubProvider) GithubLoginEnabled() bool {

@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	userpb "github.com/oj-lab/reborn/protobuf/user"
@@ -13,11 +15,12 @@ type UserRepository interface {
 	GetUserByID(ctx context.Context, id uint64) (*userpb.User, error)
 	GetUserModelByID(ctx context.Context, id uint64) (*UserModel, error)
 	GetUserByEmail(ctx context.Context, email string) (*UserModel, error)
-	GetUserByGithubID(ctx context.Context, githubID string) (*UserModel, error)
+	GetUserByProviderID(ctx context.Context, provider, providerUserID string) (*UserModel, error)
 	UpdateUser(ctx context.Context, user *userpb.UpdateUserRequest) error
 	SetPassword(ctx context.Context, userID uint64, passwordHash string) error
 	DeleteUser(ctx context.Context, id uint64) error
 	ListUsers(ctx context.Context, page, pageSize uint64) ([]*userpb.User, error)
+	FindOrCreateUserByProvider(ctx context.Context, req *userpb.OAuthLoginRequest) (*UserModel, error)
 }
 
 type UserRole string
@@ -133,9 +136,21 @@ func (r *GormUserRepository) GetUserByEmail(ctx context.Context, email string) (
 	return model, nil
 }
 
-func (r *GormUserRepository) GetUserByGithubID(ctx context.Context, githubID string) (*UserModel, error) {
+func (r *GormUserRepository) GetUserByProviderID(ctx context.Context, provider, providerUserID string) (*UserModel, error) {
 	model := &UserModel{}
-	if err := r.db.WithContext(ctx).Where("github_id = ?", githubID).First(model).Error; err != nil {
+	var query *gorm.DB
+
+	switch provider {
+	case "github":
+		query = r.db.WithContext(ctx).Where("github_id = ?", providerUserID)
+	// In the future, you can add more providers here
+	// case "google":
+	//  query = r.db.WithContext(ctx).Where("google_id = ?", providerUserID)
+	default:
+		return nil, fmt.Errorf("unsupported provider in GetUserByProviderID: %s", provider)
+	}
+
+	if err := query.First(model).Error; err != nil {
 		return nil, err
 	}
 	return model, nil
@@ -198,4 +213,57 @@ func (r *GormUserRepository) ListUsers(
 		users[i] = model.ToPb()
 	}
 	return users, nil
+}
+
+func (r *GormUserRepository) FindOrCreateUserByProvider(ctx context.Context, req *userpb.OAuthLoginRequest) (*UserModel, error) {
+	user, err := r.GetUserByProviderID(ctx, req.GetProvider(), req.GetProviderUserId())
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, fmt.Errorf("failed to get user by provider id: %w", err)
+	}
+
+	// Case 1: User found by provider ID
+	if user != nil {
+		return user, nil
+	}
+
+	// Case 2: User not found by provider ID, try to find by email
+	user, err = r.GetUserByEmail(ctx, req.GetEmail())
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, fmt.Errorf("failed to get user by email: %w", err)
+	}
+
+	// Case 2a: User found by email, link the provider ID
+	if user != nil {
+		if req.Provider == "github" {
+			updateReq := &userpb.UpdateUserRequest{
+				Id:       uint64(user.ID),
+				GithubId: &req.ProviderUserId,
+			}
+			err := r.UpdateUser(ctx, updateReq)
+			if err != nil {
+				return nil, fmt.Errorf("failed to link provider id: %w", err)
+			}
+			user.GithubID = &req.ProviderUserId
+			return user, nil
+		}
+	}
+
+	// Case 3: New user, create them
+	var githubId *string
+	if req.Provider == "github" {
+		githubId = &req.ProviderUserId
+	}
+	createUserReq := &userpb.CreateUserRequest{
+		Name:     req.GetName(),
+		Email:    req.GetEmail(),
+		Role:     userpb.UserRole_USER, // Default role
+		GithubId: githubId,
+	}
+	err = r.CreateUser(ctx, createUserReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create user: %w", err)
+	}
+
+	// Fetch the newly created user to get their ID
+	return r.GetUserByProviderID(ctx, req.GetProvider(), req.GetProviderUserId())
 }

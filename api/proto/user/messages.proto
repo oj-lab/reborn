@@ -85,8 +85,9 @@ message SetPasswordRequest {
 message SetPasswordResponse {
 }
 
-message GithubLoginRequest {
-    string github_id = 1;
-    string email = 2;
-    string name = 3;
+message OAuthLoginRequest {
+    string provider = 1;
+    string provider_user_id = 2;
+    string email = 3;
+    string name = 4;
 }

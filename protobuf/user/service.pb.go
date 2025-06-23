@@ -25,7 +25,7 @@ var File_user_service_proto protoreflect.FileDescriptor
 
 const file_user_service_proto_rawDesc = "" +
 	"\n" +
-	"\x12user/service.proto\x12\x04user\x1a\x13user/messages.proto\x1a\x1bgoogle/protobuf/empty.proto2\xf8\x03\n" +
+	"\x12user/service.proto\x12\x04user\x1a\x13user/messages.proto\x1a\x1bgoogle/protobuf/empty.proto2\xf6\x03\n" +
 	"\vUserService\x12=\n" +
 	"\n" +
 	"CreateUser\x12\x17.user.CreateUserRequest\x1a\x16.google.protobuf.Empty\x126\n" +
@@ -35,8 +35,9 @@ const file_user_service_proto_rawDesc = "" +
 	"\n" +
 	"DeleteUser\x12\x17.user.DeleteUserRequest\x1a\x18.user.DeleteUserResponse\x12<\n" +
 	"\tListUsers\x12\x16.user.ListUsersRequest\x1a\x17.user.ListUsersResponse\x120\n" +
-	"\x05Login\x12\x12.user.LoginRequest\x1a\x13.user.LoginResponse\x12<\n" +
-	"\vGithubLogin\x12\x18.user.GithubLoginRequest\x1a\x13.user.LoginResponse\x12B\n" +
+	"\x05Login\x12\x12.user.LoginRequest\x1a\x13.user.LoginResponse\x12:\n" +
+	"\n" +
+	"OAuthLogin\x12\x17.user.OAuthLoginRequest\x1a\x13.user.LoginResponse\x12B\n" +
 	"\vSetPassword\x12\x18.user.SetPasswordRequest\x1a\x19.user.SetPasswordResponseB/Z-github.com/oj-lab/reborn/protobuf/user;userpbb\x06proto3"
 
 var file_user_service_proto_goTypes = []any{
@@ -46,7 +47,7 @@ var file_user_service_proto_goTypes = []any{
 	(*DeleteUserRequest)(nil),   // 3: user.DeleteUserRequest
 	(*ListUsersRequest)(nil),    // 4: user.ListUsersRequest
 	(*LoginRequest)(nil),        // 5: user.LoginRequest
-	(*GithubLoginRequest)(nil),  // 6: user.GithubLoginRequest
+	(*OAuthLoginRequest)(nil),   // 6: user.OAuthLoginRequest
 	(*SetPasswordRequest)(nil),  // 7: user.SetPasswordRequest
 	(*emptypb.Empty)(nil),       // 8: google.protobuf.Empty
 	(*GetUserResponse)(nil),     // 9: user.GetUserResponse
@@ -63,7 +64,7 @@ var file_user_service_proto_depIdxs = []int32{
 	3,  // 3: user.UserService.DeleteUser:input_type -> user.DeleteUserRequest
 	4,  // 4: user.UserService.ListUsers:input_type -> user.ListUsersRequest
 	5,  // 5: user.UserService.Login:input_type -> user.LoginRequest
-	6,  // 6: user.UserService.GithubLogin:input_type -> user.GithubLoginRequest
+	6,  // 6: user.UserService.OAuthLogin:input_type -> user.OAuthLoginRequest
 	7,  // 7: user.UserService.SetPassword:input_type -> user.SetPasswordRequest
 	8,  // 8: user.UserService.CreateUser:output_type -> google.protobuf.Empty
 	9,  // 9: user.UserService.GetUser:output_type -> user.GetUserResponse
@@ -71,7 +72,7 @@ var file_user_service_proto_depIdxs = []int32{
 	11, // 11: user.UserService.DeleteUser:output_type -> user.DeleteUserResponse
 	12, // 12: user.UserService.ListUsers:output_type -> user.ListUsersResponse
 	13, // 13: user.UserService.Login:output_type -> user.LoginResponse
-	13, // 14: user.UserService.GithubLogin:output_type -> user.LoginResponse
+	13, // 14: user.UserService.OAuthLogin:output_type -> user.LoginResponse
 	14, // 15: user.UserService.SetPassword:output_type -> user.SetPasswordResponse
 	8,  // [8:16] is the sub-list for method output_type
 	0,  // [0:8] is the sub-list for method input_type
