@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/oj-lab/reborn/pkg/auth"
 	userpb "github.com/oj-lab/reborn/protobuf/user"
 	"golang.org/x/crypto/argon2"
 	"google.golang.org/grpc/codes"
@@ -100,7 +101,7 @@ func (s *UserService) OAuthLogin(ctx context.Context, req *userpb.OAuthLoginRequ
 		return nil, status.Errorf(codes.Internal, "failed to find or create user: %v", err)
 	}
 
-	token, err := GenerateJWT(user.ToPb())
+	token, err := auth.GenerateJWT(user.ToPb())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to generate token: %v", err)
 	}
@@ -283,7 +284,7 @@ func (s *UserService) Login(ctx context.Context, req *userpb.LoginRequest) (*use
 	}
 
 	// Generate simple token (should use JWT in production)
-	token, err := GenerateJWT(userModel.ToPb())
+	token, err := auth.GenerateJWT(userModel.ToPb())
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate JWT: %w", err)
 	}
@@ -295,7 +296,7 @@ func (s *UserService) Login(ctx context.Context, req *userpb.LoginRequest) (*use
 }
 
 func (s *UserService) SetPassword(ctx context.Context, req *userpb.SetPasswordRequest) (*userpb.SetPasswordResponse, error) {
-	claims, ok := ctx.Value(claimsContextKey).(*Claims)
+	claims, ok := auth.ClaimsFromContext(ctx)
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "invalid token claims")
 	}

@@ -1,4 +1,4 @@
-package main
+package auth
 
 import (
 	"context"
@@ -29,6 +29,18 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
+type Auth struct {
+	publicMethods map[string]bool
+	acl           map[string]map[userpb.UserRole]bool
+}
+
+func NewAuth(publicMethods map[string]bool, acl map[string]map[userpb.UserRole]bool) *Auth {
+	return &Auth{
+		publicMethods: publicMethods,
+		acl:           acl,
+	}
+}
+
 func GenerateJWT(user *userpb.User) (string, error) {
 	expirationTime := time.Now().Add(24 * time.Hour)
 
@@ -54,7 +66,12 @@ func GenerateJWT(user *userpb.User) (string, error) {
 
 type contextKey string
 
-const claimsContextKey = contextKey("claims")
+const ClaimsContextKey = contextKey("claims")
+
+func ClaimsFromContext(ctx context.Context) (*Claims, bool) {
+	claims, ok := ctx.Value(ClaimsContextKey).(*Claims)
+	return claims, ok
+}
 
 func ValidateJWT(ctx context.Context) (*Claims, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
@@ -93,8 +110,8 @@ func ValidateJWT(ctx context.Context) (*Claims, error) {
 	return claims, nil
 }
 
-func AuthInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
-	if publicMethods[info.FullMethod] {
+func (a *Auth) AuthInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+	if a.publicMethods[info.FullMethod] {
 		return handler(ctx, req)
 	}
 
@@ -104,14 +121,14 @@ func AuthInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, h
 	}
 
 	// Authorization check
-	if requiredRoles, ok := acl[info.FullMethod]; ok {
+	if requiredRoles, ok := a.acl[info.FullMethod]; ok {
 		if !requiredRoles[claims.Role] {
 			return nil, status.Errorf(codes.PermissionDenied, "you do not have permission to perform this action")
 		}
 	}
 
 	// Store claims in context for use in RPC methods
-	newCtx := context.WithValue(ctx, claimsContextKey, claims)
+	newCtx := context.WithValue(ctx, ClaimsContextKey, claims)
 
 	return handler(newCtx, req)
 }

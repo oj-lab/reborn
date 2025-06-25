@@ -9,6 +9,7 @@ import (
 
 	"github.com/oj-lab/reborn/common/app"
 	"github.com/oj-lab/reborn/common/gorm_client"
+	"github.com/oj-lab/reborn/pkg/auth"
 	userpb "github.com/oj-lab/reborn/protobuf/user"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -26,7 +27,6 @@ func init() {
 	cwd, _ := os.Getwd()
 	app.Init(cwd, "user_service")
 	port = app.Config().GetUint(configKeyServerPort)
-	jwtSecret = []byte(app.Config().GetString("jwt.secret"))
 
 	// Load public methods for auth interceptor
 	methods := app.Config().GetStringSlice("auth.public_methods")
@@ -58,8 +58,10 @@ func main() {
 	repo := NewGormUserRepository(db)
 	service := NewUserService(repo)
 
+	authInstance := auth.NewAuth(publicMethods, acl)
+
 	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(AuthInterceptor),
+		grpc.UnaryInterceptor(authInstance.AuthInterceptor),
 	)
 	userpb.RegisterUserServiceServer(grpcServer, service)
 	reflection.Register(grpcServer)
