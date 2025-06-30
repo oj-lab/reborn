@@ -19,7 +19,7 @@ Reborn is a modern online judge platform built with a microservice architecture.
 ### Frontend (React/TypeScript)
 - **Build Tool**: Vite with SWC for fast development
 - **UI Framework**: React 19 with TypeScript
-- **Component Library**: Radix UI primitives with custom components
+- **Component Library**: Shadcn UI with accessible and customizable components
 - **Styling**: Tailwind CSS 4.x with custom design system
 - **State Management**: React hooks and context
 - **Internationalization**: react-i18next for multi-language support
@@ -44,7 +44,7 @@ Reborn is a modern online judge platform built with a microservice architecture.
 ```
 /website/src/
   ├── components/               # Reusable UI components
-  │   ├── ui/                  # Base UI components (shadcn/ui style)
+  │   ├── ui/                  # Shadcn UI base components
   │   └── AdminApp.tsx         # Main application component
   ├── pages/                   # Page components
   ├── hooks/                   # Custom React hooks
@@ -99,7 +99,7 @@ Reborn is a modern online judge platform built with a microservice architecture.
 
 ### Frontend Dependencies
 - `react` & `react-dom` - UI framework
-- `@radix-ui/*` - Accessible UI primitives
+- `shadcn/ui` - Copy-paste accessible components built on Radix UI primitives
 - `tailwindcss` - Utility-first CSS framework
 - `axios` - HTTP client (via generated API)
 - `react-i18next` - Internationalization
@@ -128,7 +128,7 @@ Reborn is a modern online judge platform built with a microservice architecture.
 ## Development Guidelines
 - Write tests for business logic and API endpoints
 - Use TypeScript strict mode and handle all type errors
-- Follow accessibility best practices with Radix UI
+- Follow accessibility best practices with Shadcn UI components
 - Implement proper loading states and error handling
 - Use semantic commit messages
 - Keep components small and focused on single responsibility
