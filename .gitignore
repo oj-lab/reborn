@@ -1,2 +1,6 @@
 bin
 __debug_bin*
+
+# Package managers - project uses pnpm
+website/package-lock.json
+website/yarn.lock
