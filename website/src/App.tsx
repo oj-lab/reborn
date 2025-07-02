@@ -1,10 +1,8 @@
-import AdminApp from './components/AdminApp'
+import LandingPage from './components/LandingPage'
 
 function App() {
   return (
-    <div className="min-h-screen bg-background">
-      <AdminApp />
-    </div>
+    <LandingPage />
   )
 }
 
