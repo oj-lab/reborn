@@ -23,6 +23,103 @@ import type { RequestArgs } from './base';
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError, operationServerMap } from './base';
 
+/**
+ * 
+ * @export
+ * @interface EchoHTTPError
+ */
+export interface EchoHTTPError {
+    /**
+     * 
+     * @type {object}
+     * @memberof EchoHTTPError
+     */
+    'message'?: object;
+}
+/**
+ * 
+ * @export
+ * @interface TimestamppbTimestamp
+ */
+export interface TimestamppbTimestamp {
+    /**
+     * Non-negative fractions of a second at nanosecond resolution. Negative second values with fractions must still have non-negative nanos values that count forward in time. Must be from 0 to 999,999,999 inclusive.
+     * @type {number}
+     * @memberof TimestamppbTimestamp
+     */
+    'nanos'?: number;
+    /**
+     * Represents seconds of UTC time since Unix epoch 1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to 9999-12-31T23:59:59Z inclusive.
+     * @type {number}
+     * @memberof TimestamppbTimestamp
+     */
+    'seconds'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface UserpbUser
+ */
+export interface UserpbUser {
+    /**
+     * 
+     * @type {TimestamppbTimestamp}
+     * @memberof UserpbUser
+     */
+    'created_at'?: TimestamppbTimestamp;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserpbUser
+     */
+    'email'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserpbUser
+     */
+    'github_id'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof UserpbUser
+     */
+    'id'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserpbUser
+     */
+    'name'?: string;
+    /**
+     * 
+     * @type {UserpbUserRole}
+     * @memberof UserpbUser
+     */
+    'role'?: UserpbUserRole;
+    /**
+     * 
+     * @type {TimestamppbTimestamp}
+     * @memberof UserpbUser
+     */
+    'updated_at'?: TimestamppbTimestamp;
+}
+
+
+/**
+ * 
+ * @export
+ * @enum {number}
+ */
+
+export const UserpbUserRole = {
+    UserRole_USER: 0,
+    UserRole_ADMIN: 1
+} as const;
+
+export type UserpbUserRole = typeof UserpbUserRole[keyof typeof UserpbUserRole];
+
+
 
 /**
  * UserApi - axios parameter creator
@@ -31,13 +128,13 @@ import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError, operationServerM
 export const UserApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * Create a new user with the provided details
-         * @summary Create a new user
+         * Retrieve the information of the currently authenticated user
+         * @summary Get current user
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        userPost: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            const localVarPath = `/user`;
+        apiV1UserMeGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/v1/user/me`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -45,7 +142,7 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -71,15 +168,15 @@ export const UserApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = UserApiAxiosParamCreator(configuration)
     return {
         /**
-         * Create a new user with the provided details
-         * @summary Create a new user
+         * Retrieve the information of the currently authenticated user
+         * @summary Get current user
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async userPost(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.userPost(options);
+        async apiV1UserMeGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<UserpbUser>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiV1UserMeGet(options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['UserApi.userPost']?.[localVarOperationServerIndex]?.url;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.apiV1UserMeGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
     }
@@ -93,13 +190,13 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
     const localVarFp = UserApiFp(configuration)
     return {
         /**
-         * Create a new user with the provided details
-         * @summary Create a new user
+         * Retrieve the information of the currently authenticated user
+         * @summary Get current user
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        userPost(options?: RawAxiosRequestConfig): AxiosPromise<void> {
-            return localVarFp.userPost(options).then((request) => request(axios, basePath));
+        apiV1UserMeGet(options?: RawAxiosRequestConfig): AxiosPromise<UserpbUser> {
+            return localVarFp.apiV1UserMeGet(options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -112,14 +209,14 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
  */
 export class UserApi extends BaseAPI {
     /**
-     * Create a new user with the provided details
-     * @summary Create a new user
+     * Retrieve the information of the currently authenticated user
+     * @summary Get current user
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UserApi
      */
-    public userPost(options?: RawAxiosRequestConfig) {
-        return UserApiFp(this.configuration).userPost(options).then((request) => request(this.axios, this.basePath));
+    public apiV1UserMeGet(options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).apiV1UserMeGet(options).then((request) => request(this.axios, this.basePath));
     }
 }
 
