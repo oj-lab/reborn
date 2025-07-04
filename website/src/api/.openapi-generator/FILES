@@ -4,6 +4,10 @@ api.ts
 base.ts
 common.ts
 configuration.ts
+docs/EchoHTTPError.md
+docs/TimestamppbTimestamp.md
 docs/UserApi.md
+docs/UserpbUser.md
+docs/UserpbUserRole.md
 git_push.sh
 index.ts
