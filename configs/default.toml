@@ -3,3 +3,6 @@ port = 8080
 
 [auth_service]
 address = "localhost:50051"
+
+[website]
+dist_path = "./website/dist"

@@ -14,5 +14,7 @@ func RegisterAuthRoutes(e *echo.Echo, serviceManager *services.ServiceManager) {
 	{
 		authGroup.GET("/login", authHandler.Login)
 		authGroup.GET("/callback", authHandler.Callback)
+		authGroup.POST("/logout", authHandler.Logout)
+		authGroup.GET("/logout", authHandler.Logout) // Support both GET and POST for logout
 	}
 }

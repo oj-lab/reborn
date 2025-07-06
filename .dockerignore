@@ -1,0 +1,64 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+CONTRIBUTING.md
+LICENSE
+
+# Build artifacts
+bin/
+build/
+website/dist/
+website/node_modules/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+
+# Temporary files
+tmp/
+temp/
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.development
+
+# Debug files
+__debug_bin*
+
+# Test files
+*_test.go
+test/
+tests/
+
+# Coverage files
+coverage.out
+*.cover
+
+# Cache directories
+.cache/
+.npm/
+.pnpm-store/
+
+# Deployment files
+deployment/
+docker-compose*.yml
+*.compose.yml
+
+# API documentation (will be regenerated)
+api/

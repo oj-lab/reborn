@@ -11,7 +11,12 @@ swag:
 	openapi-generator-cli generate -i /local/api/api_v1_swagger.json -g typescript-axios -o /local/website/src/api
 
 .PHONY: build
-build: swag
+build:
+	mkdir -p bin
+	go build -o bin/web cmd/main.go
+
+.PHONY: build-dev
+build-dev: swag
 	mkdir -p bin
 	go build -o bin/web cmd/main.go
 

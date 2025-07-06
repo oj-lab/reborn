@@ -1,5 +1,3 @@
-import { ModeToggle } from '@/components/mode-toggle'
-import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { useEffect } from 'react'
 
 export default function LandingPage() {
@@ -381,20 +379,6 @@ export default function LandingPage() {
           <div className="w-8 h-0.5 yellow-line rounded-full"></div>
         </div>
       </div>
-
-      {/* Header */}
-      <header className="border-b backdrop-blur-sm bg-background/80 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between opacity-0 animate-header">
-          <div className="flex items-center space-x-2">
-            <h1 className="text-2xl font-bold text-foreground hover:text-primary transition-colors duration-300">OJ Lab</h1>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <LanguageSwitcher />
-            <ModeToggle />
-          </div>
-        </div>
-      </header>
 
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center px-4">

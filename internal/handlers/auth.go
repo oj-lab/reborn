@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -42,6 +43,7 @@ func (h *AuthHandler) Login(ctx echo.Context) error {
 			Provider: provider,
 		})
 	if err != nil {
+		slog.Error("Failed to get OAuth URL", "error", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get OAuth URL")
 	}
 
@@ -66,6 +68,7 @@ func (h *AuthHandler) Callback(ctx echo.Context) error {
 			State: state,
 		})
 	if err != nil {
+		slog.Error("Failed to login by OAuth", "error", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to login by OAuth")
 	}
 	ctx.SetCookie(&http.Cookie{
@@ -75,4 +78,16 @@ func (h *AuthHandler) Callback(ctx echo.Context) error {
 		MaxAge: int(time.Until(resp.ExpiresAt.AsTime()).Seconds()),
 	})
 	return ctx.Redirect(http.StatusFound, "/") // Redirect to home page after login
+}
+
+// Logout handles logout requests
+func (h *AuthHandler) Logout(ctx echo.Context) error {
+	// Clear the login session cookie
+	ctx.SetCookie(&http.Cookie{
+		Name:   middlewares.LoginSessionCookieName,
+		Value:  "",
+		Path:   "/",
+		MaxAge: -1, // Expire immediately
+	})
+	return ctx.Redirect(http.StatusFound, "/") // Redirect to home page after logout
 }

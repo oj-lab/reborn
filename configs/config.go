@@ -6,11 +6,13 @@ import "github.com/oj-lab/go-webmods/app"
 const (
 	ServerPortKey         = "server.port"
 	AuthServiceAddressKey = "auth_service.address"
+	WebsiteDistPathKey    = "website.dist_path"
 )
 
 type Config struct {
 	Server      ServerConfig
 	AuthService AuthServiceConfig
+	Website     WebsiteConfig
 }
 
 type ServerConfig struct {
@@ -21,6 +23,10 @@ type AuthServiceConfig struct {
 	Address string
 }
 
+type WebsiteConfig struct {
+	DistPath string
+}
+
 func Load() Config {
 	cfg := Config{
 		Server: ServerConfig{
@@ -28,6 +34,9 @@ func Load() Config {
 		},
 		AuthService: AuthServiceConfig{
 			Address: app.Config().GetString(AuthServiceAddressKey),
+		},
+		Website: WebsiteConfig{
+			DistPath: app.Config().GetString(WebsiteDistPathKey),
 		},
 	}
 	return cfg

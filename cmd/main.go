@@ -53,14 +53,18 @@ func main() {
 	// Add health check endpoint
 	e.GET("/health", func(c echo.Context) error {
 		health := serviceManager.HealthCheck()
-		return c.JSON(200, map[string]interface{}{
+		return c.JSON(200, map[string]any{
 			"status":   "ok",
 			"services": health,
 		})
 	})
 
+	// Register API routes
 	routers.RegisterAPIv1Routes(e, serviceManager)
 	routers.RegisterAuthRoutes(e, serviceManager)
+
+	// Add static website middleware (this should be last)
+	e.Use(middlewares.StaticWebsite(cfg))
 
 	// Start server in a goroutine
 	go func() {
