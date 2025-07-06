@@ -6,3 +6,12 @@ address = "localhost:50051"
 
 [website]
 dist_path = "./website/dist"
+
+[database]
+driver = "sqlite"
+host = ""
+port = 0
+username = ""
+password = ""
+name = "./data/reborn.db"
+ssl_mode = ""

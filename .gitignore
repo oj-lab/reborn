@@ -1,6 +1,12 @@
 bin
 __debug_bin*
 
+# Build artifacts
+main
+
+# Data directory 
+data/
+
 # Package managers - project uses pnpm
 website/package-lock.json
 website/yarn.lock
