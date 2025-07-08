@@ -1,30 +1,20 @@
-import React, { createContext, useCallback, useEffect, useState, useMemo } from 'react'
+import React, { useCallback, useEffect, useState, useMemo } from 'react'
 import type { ReactNode } from 'react'
-import { simpleApiClient } from '@/api/simple-client'
-import type { User } from '@/api/simple-client'
-
-interface AuthContextType {
-  user: User | null
-  loading: boolean
-  login: () => void
-  logout: () => void
-  fetchUser: () => Promise<void>
-  isAuthenticated: boolean
-}
-
-export const AuthContext = createContext<AuthContextType | undefined>(undefined)
+import { apiClient } from '@/api/client'
+import type { UserpbUser } from '@/api/api'
+import { AuthContext, type AuthContextType } from './auth-context'
 
 interface AuthProviderProps {
   children: ReactNode
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<UserpbUser | null>(null)
   const [loading, setLoading] = useState(true)
 
   const fetchUser = useCallback(async () => {
     try {
-      const response = await simpleApiClient.userApi.getCurrentUser()
+      const response = await apiClient.userApi.apiV1UserMeGet()
       setUser(response.data)
     } catch (error) {
       console.error('Failed to fetch user:', error)

@@ -2,6 +2,7 @@ import React from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,9 +13,14 @@ import { LogOut } from 'lucide-react'
 import { GitHubIcon } from '@/components/icons/GitHubIcon'
 import { ModeToggle } from '@/components/mode-toggle'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { useTranslation } from 'react-i18next'
+import { UserpbUserRole } from '@/api/api'
 
 const Header: React.FC = () => {
   const { user, loading, login, logout, isAuthenticated } = useAuth()
+  const { t } = useTranslation()
+
+  const isAdmin = user?.role === UserpbUserRole.UserRole_ADMIN
 
   return (
     <header className="border-b backdrop-blur-sm bg-background/80 sticky top-0 z-50">
@@ -47,7 +53,21 @@ const Header: React.FC = () => {
                 <div className="flex items-center justify-start gap-2 p-2">
                   <div className="flex flex-col space-y-1 leading-none">
                     {user.name && (
-                      <p className="font-medium">{user.name}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-medium">
+                          {user.name}
+                          {user.id && (
+                            <span className="text-muted-foreground font-normal ml-1">
+                              #{user.id}
+                            </span>
+                          )}
+                        </p>
+                        {isAdmin && (
+                          <Badge variant="secondary" className="text-xs">
+                            {t('common.admin')}
+                          </Badge>
+                        )}
+                      </div>
                     )}
                     {user.email && (
                       <p className="w-[200px] truncate text-sm text-muted-foreground">

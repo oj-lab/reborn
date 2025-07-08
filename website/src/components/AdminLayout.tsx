@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useAuth } from '@/hooks/useAuth'
+import { UserpbUserRole } from '@/api/api'
 import {
   Sidebar,
   SidebarContent,
@@ -17,6 +19,7 @@ import {
 } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -110,8 +113,11 @@ const useMenuItems = () => {
 
 export default function AdminLayout({ children, currentRoute = '/dashboard', onRouteChange }: AdminLayoutProps) {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const [activeItem, setActiveItem] = useState(currentRoute)
   const menuItems = useMenuItems()
+
+  const isAdmin = user?.role === UserpbUserRole.UserRole_ADMIN
 
   return (
     <SidebarProvider>
@@ -169,12 +175,21 @@ export default function AdminLayout({ children, currentRoute = '/dashboard', onR
                       className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                     >
                       <Avatar className="h-8 w-8 rounded-lg">
-                        <AvatarImage src="/avatars/01.png" alt={t('layout.adminName')} />
-                        <AvatarFallback className="rounded-lg">管理</AvatarFallback>
+                        <AvatarImage src="" alt={user?.name || 'User'} />
+                        <AvatarFallback className="rounded-lg">
+                          {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                        </AvatarFallback>
                       </Avatar>
                       <div className="grid flex-1 text-left text-sm leading-tight">
-                        <span className="truncate font-semibold">{t('layout.adminName')}</span>
-                        <span className="truncate text-xs">{t('layout.adminEmail')}</span>
+                        <span className="truncate font-semibold">
+                          {user?.name || t('layout.adminName')}
+                          {user?.id && (
+                            <span className="text-muted-foreground font-normal ml-1">
+                              #{user.id}
+                            </span>
+                          )}
+                        </span>
+                        <span className="truncate text-xs">{user?.email || t('layout.adminEmail')}</span>
                       </div>
                       <ChevronUp className="ml-auto size-4" />
                     </SidebarMenuButton>
@@ -188,12 +203,28 @@ export default function AdminLayout({ children, currentRoute = '/dashboard', onR
                     <DropdownMenuLabel className="p-0 font-normal">
                       <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                         <Avatar className="h-8 w-8 rounded-lg">
-                          <AvatarImage src="/avatars/01.png" alt={t('layout.adminName')} />
-                          <AvatarFallback className="rounded-lg">管理</AvatarFallback>
+                          <AvatarImage src="" alt={user?.name || 'User'} />
+                          <AvatarFallback className="rounded-lg">
+                            {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                          </AvatarFallback>
                         </Avatar>
                         <div className="grid flex-1 text-left text-sm leading-tight">
-                          <span className="truncate font-semibold">{t('layout.adminName')}</span>
-                          <span className="truncate text-xs">{t('layout.adminEmail')}</span>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="truncate font-semibold">
+                              {user?.name || t('layout.adminName')}
+                              {user?.id && (
+                                <span className="text-muted-foreground font-normal ml-1">
+                                  #{user.id}
+                                </span>
+                              )}
+                            </span>
+                            {isAdmin && (
+                              <Badge variant="secondary" className="text-xs">
+                                {t('common.admin')}
+                              </Badge>
+                            )}
+                          </div>
+                          <span className="truncate text-xs">{user?.email || t('layout.adminEmail')}</span>
                         </div>
                       </div>
                     </DropdownMenuLabel>
