@@ -36,14 +36,20 @@ func (h *AuthHandler) Login(ctx echo.Context) error {
 		provider = "github"
 	}
 
+	redirectURL := ctx.QueryParam("redirect_url")
+	if redirectURL == "" {
+		redirectURL = "/"
+	}
+
 	// Get OAuth URL from auth service
 	client := h.authService.GetClient()
 	resp, err := client.GetClient().
 		GetOAuthCodeURL(ctx.Request().Context(), &userpb.GetOAuthCodeURLRequest{
-			Provider: provider,
+			Provider:    provider,
+			RedirectUrl: &redirectURL,
 		})
 	if err != nil {
-		slog.Error("Failed to get OAuth URL", "error", err)
+		slog.Error("Failed to get OAuth URL", "error", err, "provider", provider, "redirect_url", redirectURL)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get OAuth URL")
 	}
 

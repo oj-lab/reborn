@@ -4,8 +4,8 @@ go 1.24.4
 
 require (
 	github.com/labstack/echo/v4 v4.13.4
-	github.com/oj-lab/go-webmods v0.1.2
-	github.com/oj-lab/user-service v0.1.0
+	github.com/oj-lab/go-webmods v0.1.4
+	github.com/oj-lab/user-service v0.1.1
 	google.golang.org/grpc v1.73.0
 	google.golang.org/protobuf v1.36.6
 )
