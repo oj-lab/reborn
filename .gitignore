@@ -4,3 +4,6 @@ __debug_bin*
 # Package managers - project uses pnpm
 website/package-lock.json
 website/yarn.lock
+
+# Development configs won't be committed
+development.toml

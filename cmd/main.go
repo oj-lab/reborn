@@ -62,6 +62,7 @@ func main() {
 	// Register API routes
 	routers.RegisterAPIv1Routes(e, serviceManager)
 	routers.RegisterAuthRoutes(e, serviceManager)
+	routers.RegisterAdminRoutes(e, serviceManager)
 
 	// Add static website middleware (this should be last)
 	e.Use(middlewares.StaticWebsite(cfg))

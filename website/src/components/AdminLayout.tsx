@@ -1,7 +1,7 @@
-import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { useAuth } from '@/hooks/useAuth'
-import { UserpbUserRole } from '@/api/api'
+import { useTranslation } from "react-i18next";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { UserpbUserRole } from "@/api/api";
 import {
   Sidebar,
   SidebarContent,
@@ -16,21 +16,20 @@ import {
   SidebarProvider,
   SidebarRail,
   SidebarTrigger,
-} from '@/components/ui/sidebar'
-import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
+} from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { LanguageSwitcher } from '@/components/LanguageSwitcher'
-import { ModeToggle } from '@/components/mode-toggle'
-import { ColorThemeToggle } from '@/components/color-theme-toggle'
+} from "@/components/ui/dropdown-menu";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { ModeToggle } from "@/components/mode-toggle";
+import { ColorThemeToggle } from "@/components/color-theme-toggle";
 import {
   LayoutDashboard,
   Users,
@@ -41,83 +40,95 @@ import {
   Bell,
   HelpCircle,
   LogOut,
-  User,
-  ChevronUp,
   Palette,
-} from 'lucide-react'
+  Home,
+} from "lucide-react";
 
 interface AdminLayoutProps {
-  children: React.ReactNode
-  currentRoute?: string
-  onRouteChange?: (route: string) => void
+  children: React.ReactNode;
+  currentRoute?: string;
 }
 
 // Navigation menu items
 const useMenuItems = () => {
-  const { t } = useTranslation()
-  
+  const { t } = useTranslation();
+
   return [
     {
-      title: t('nav.overview'),
+      title: t("nav.overview"),
       items: [
         {
-          title: t('nav.dashboard'),
+          title: t("nav.dashboard"),
           icon: LayoutDashboard,
-          url: '/dashboard',
+          url: "/admin/dashboard",
           isActive: true,
         },
       ],
     },
     {
-      title: t('nav.userManagement'),
+      title: t("nav.userManagement"),
       items: [
         {
-          title: t('nav.users'),
+          title: t("nav.users"),
           icon: Users,
-          url: '/users',
+          url: "/admin/users",
         },
         {
-          title: t('nav.permissions'),
+          title: t("nav.permissions"),
           icon: Shield,
-          url: '/permissions',
+          url: "/admin/permissions",
         },
       ],
     },
     {
-      title: t('nav.systemManagement'),
+      title: t("nav.systemManagement"),
       items: [
         {
-          title: t('nav.data'),
+          title: t("nav.data"),
           icon: Database,
-          url: '/data',
+          url: "/admin/data",
         },
         {
-          title: t('nav.settings'),
+          title: t("nav.settings"),
           icon: Settings,
-          url: '/settings',
+          url: "/admin/settings",
         },
         {
-          title: t('nav.analytics'),
+          title: t("nav.analytics"),
           icon: BarChart3,
-          url: '/analytics',
+          url: "/admin/analytics",
         },
         {
-          title: t('theme.demo.title', '主题演示'),
+          title: t("theme.demo.title", "主题演示"),
           icon: Palette,
-          url: '/theme-demo',
+          url: "/admin/theme-demo",
         },
       ],
     },
-  ]
-}
+  ];
+};
 
-export default function AdminLayout({ children, currentRoute = '/dashboard', onRouteChange }: AdminLayoutProps) {
-  const { t } = useTranslation()
-  const { user } = useAuth()
-  const [activeItem, setActiveItem] = useState(currentRoute)
-  const menuItems = useMenuItems()
+export default function AdminLayout({
+  children,
+  currentRoute,
+}: AdminLayoutProps) {
+  const { t } = useTranslation();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const menuItems = useMenuItems();
 
-  const isAdmin = user?.role === UserpbUserRole.UserRole_ADMIN
+  const activeItem = currentRoute || location.pathname;
+  const isAdmin = user?.role === UserpbUserRole.UserRole_ADMIN;
+
+  const handleNavigation = (url: string) => {
+    navigate(url);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   return (
     <SidebarProvider>
@@ -131,7 +142,9 @@ export default function AdminLayout({ children, currentRoute = '/dashboard', onR
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">Reborn Admin</span>
-                <span className="truncate text-xs text-muted-foreground">{t('layout.adminSystem')}</span>
+                <span className="truncate text-xs text-muted-foreground">
+                  {t("layout.adminSystem")}
+                </span>
               </div>
             </div>
           </SidebarHeader>
@@ -147,10 +160,7 @@ export default function AdminLayout({ children, currentRoute = '/dashboard', onR
                         <SidebarMenuButton
                           asChild
                           isActive={activeItem === item.url}
-                          onClick={() => {
-                            setActiveItem(item.url)
-                            onRouteChange?.(item.url)
-                          }}
+                          onClick={() => handleNavigation(item.url)}
                         >
                           <div className="flex items-center gap-2 cursor-pointer">
                             <item.icon className="h-4 w-4" />
@@ -166,86 +176,7 @@ export default function AdminLayout({ children, currentRoute = '/dashboard', onR
           </SidebarContent>
 
           <SidebarFooter>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <SidebarMenuButton
-                      size="lg"
-                      className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                    >
-                      <Avatar className="h-8 w-8 rounded-lg">
-                        <AvatarImage src="" alt={user?.name || 'User'} />
-                        <AvatarFallback className="rounded-lg">
-                          {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="grid flex-1 text-left text-sm leading-tight">
-                        <span className="truncate font-semibold">
-                          {user?.name || t('layout.adminName')}
-                          {user?.id && (
-                            <span className="text-muted-foreground font-normal ml-1">
-                              #{user.id}
-                            </span>
-                          )}
-                        </span>
-                        <span className="truncate text-xs">{user?.email || t('layout.adminEmail')}</span>
-                      </div>
-                      <ChevronUp className="ml-auto size-4" />
-                    </SidebarMenuButton>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                    side="bottom"
-                    align="end"
-                    sideOffset={4}
-                  >
-                    <DropdownMenuLabel className="p-0 font-normal">
-                      <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                        <Avatar className="h-8 w-8 rounded-lg">
-                          <AvatarImage src="" alt={user?.name || 'User'} />
-                          <AvatarFallback className="rounded-lg">
-                            {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="grid flex-1 text-left text-sm leading-tight">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="truncate font-semibold">
-                              {user?.name || t('layout.adminName')}
-                              {user?.id && (
-                                <span className="text-muted-foreground font-normal ml-1">
-                                  #{user.id}
-                                </span>
-                              )}
-                            </span>
-                            {isAdmin && (
-                              <Badge variant="secondary" className="text-xs">
-                                {t('common.admin')}
-                              </Badge>
-                            )}
-                          </div>
-                          <span className="truncate text-xs">{user?.email || t('layout.adminEmail')}</span>
-                        </div>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem>
-                      <User className="mr-2 h-4 w-4" />
-                      {t('layout.profile')}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Settings className="mr-2 h-4 w-4" />
-                      {t('nav.settings')}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      {t('layout.logout')}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </SidebarMenuItem>
-            </SidebarMenu>
+            {/* User menu moved to header, footer can be used for other content if needed */}
           </SidebarFooter>
           <SidebarRail />
         </Sidebar>
@@ -256,15 +187,25 @@ export default function AdminLayout({ children, currentRoute = '/dashboard', onR
           <header className="flex h-16 shrink-0 items-center gap-2 border-b px-3 md:px-4">
             <SidebarTrigger className="-ml-1" />
             <div className="flex flex-1 items-center justify-between">
-              <div></div>
+              <div className="flex items-center gap-2">
+                {/* Left items */}
+              </div>
               <div className="flex items-center gap-1 md:gap-2">
                 {/* Notification button - hidden on small screens */}
-                <Button variant="ghost" size="icon" className="h-8 w-8 hidden sm:inline-flex">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 hidden sm:inline-flex"
+                >
                   <Bell className="h-4 w-4" />
                 </Button>
-                
+
                 {/* Help button - hidden on small screens */}
-                <Button variant="ghost" size="icon" className="h-8 w-8 hidden sm:inline-flex">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 hidden sm:inline-flex"
+                >
                   <HelpCircle className="h-4 w-4" />
                 </Button>
 
@@ -276,16 +217,69 @@ export default function AdminLayout({ children, currentRoute = '/dashboard', onR
 
                 {/* Dark mode toggle */}
                 <ModeToggle />
+
+                {/* User menu */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="relative h-8 w-8 rounded-full"
+                    >
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src="" alt={user?.name || "User"} />
+                        <AvatarFallback>
+                          {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <div className="flex items-center justify-start gap-2 p-2">
+                      <div className="flex flex-col space-y-1 leading-none">
+                        {user?.name && (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-medium">
+                              {user.name}
+                              {user.id && (
+                                <span className="text-muted-foreground font-normal ml-1">
+                                  #{user.id}
+                                </span>
+                              )}
+                            </p>
+                            {isAdmin && (
+                              <Badge variant="secondary" className="text-xs">
+                                {t("common.admin")}
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+                        {user?.email && (
+                          <p className="w-[200px] truncate text-sm text-muted-foreground">
+                            {user.email}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate("/")}>
+                      <Home className="mr-2 h-4 w-4" />
+                      {t("layout.backToHome")}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      {t("layout.logout")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </header>
 
           {/* Main content */}
-          <main className="flex-1 overflow-auto p-3 md:p-6">
-            {children}
-          </main>
+          <main className="flex-1 overflow-auto p-3 md:p-6">{children}</main>
         </div>
       </div>
     </SidebarProvider>
-  )
+  );
 }

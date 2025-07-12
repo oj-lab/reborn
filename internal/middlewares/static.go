@@ -22,7 +22,7 @@ func ServeStaticFiles(distPath string) echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			path := c.Request().URL.Path
 
-			// Skip for API routes
+			// Skip for API routes and auth routes
 			if strings.HasPrefix(path, "/api/") ||
 				strings.HasPrefix(path, "/auth/") ||
 				strings.HasPrefix(path, "/health") {

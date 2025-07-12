@@ -1,5 +1,5 @@
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import AdminLayout from '@/components/AdminLayout'
 import Dashboard from '@/pages/Dashboard'
 import UserManagement from '@/pages/UserManagement'
@@ -91,29 +91,23 @@ const AnalyticsPage = () => {
   )
 }
 
-// Route configuration
-const routes = {
-  '/dashboard': Dashboard,
-  '/users': UserManagement,
-  '/permissions': PermissionsPage,
-  '/data': DataManagementPage,
-  '/settings': SettingsPage,
-  '/analytics': AnalyticsPage,
-  '/theme-demo': ThemeDemo,
-}
-
 export default function AdminApp() {
-  const [currentRoute, setCurrentRoute] = useState('/dashboard')
-
-  // Get current page component
-  const getCurrentPage = () => {
-    const PageComponent = routes[currentRoute as keyof typeof routes] || Dashboard
-    return <PageComponent />
-  }
+  const location = useLocation()
+  const currentRoute = location.pathname
 
   return (
-    <AdminLayout currentRoute={currentRoute} onRouteChange={setCurrentRoute}>
-      {getCurrentPage()}
+    <AdminLayout currentRoute={currentRoute}>
+      <Routes>
+        <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/users" element={<UserManagement />} />
+        <Route path="/permissions" element={<PermissionsPage />} />
+        <Route path="/data" element={<DataManagementPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/analytics" element={<AnalyticsPage />} />
+        <Route path="/theme-demo" element={<ThemeDemo />} />
+        <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+      </Routes>
     </AdminLayout>
   )
 }

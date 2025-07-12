@@ -46,6 +46,7 @@ const zhCN = {
     overview: '概览',
     userManagement: '用户管理',
     systemManagement: '系统管理',
+    admin: '管理后台',
   },
   dashboard: {
     title: '仪表板',
@@ -130,12 +131,16 @@ const zhCN = {
     inDevelopment: '此功能正在开发中...',
     comingSoon: '敬请期待！',
   },
+  auth: {
+    logout: '退出登录',
+  },
   layout: {
     adminSystem: '后台管理系统',
     profile: '个人资料',
     logout: '退出登录',
     adminEmail: 'admin@example.com',
     adminName: '管理员',
+    backToHome: '返回首页',
   },
   theme: {
     toggle: '切换主题',
@@ -219,6 +224,7 @@ const enUS = {
     overview: 'Overview',
     userManagement: 'User Management',
     systemManagement: 'System Management',
+    admin: 'Admin Panel',
   },
   dashboard: {
     title: 'Dashboard',
@@ -303,12 +309,16 @@ const enUS = {
     inDevelopment: 'This feature is under development...',
     comingSoon: 'Coming soon!',
   },
+  auth: {
+    logout: 'Log out',
+  },
   layout: {
     adminSystem: 'Admin System',
     profile: 'Profile',
     logout: 'Logout',
     adminEmail: 'admin@example.com',
     adminName: 'Administrator',
+    backToHome: 'Back to Home',
   },
   theme: {
     toggle: 'Toggle theme',
