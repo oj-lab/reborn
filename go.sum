@@ -33,10 +33,10 @@ github.com/mattn/go-colorable v0.1.14 h1:9A9LHSqF/7dyVVX6g0U9cwm9pG3kP9gSzcuIPHP
 github.com/mattn/go-colorable v0.1.14/go.mod h1:6LmQG8QLFO4G5z1gPvYEzlUgJ2wF+stgPZH1UqBm1s8=
 github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=
 github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
-github.com/oj-lab/go-webmods v0.1.2 h1:qTGEFxVBvmhje01G2hm7kkFJGtUftGN1PqGq5waAhqA=
-github.com/oj-lab/go-webmods v0.1.2/go.mod h1:uesqdknjSkyXtlGB+bnCbHCtfqpESdQUuA8WCwkJkJo=
-github.com/oj-lab/user-service v0.1.0 h1:JGpGXIHFOeWA8i7rd24wWdcjvcYpumm/U7J31bkRYyA=
-github.com/oj-lab/user-service v0.1.0/go.mod h1:Jiad7mnMuho27vx7e03zLZMCASed0r12DMumdKSsDbY=
+github.com/oj-lab/go-webmods v0.1.4 h1:NJPv6FxG3JPjwMpUThGtr1ngfkLxVk2cin29MTGuQRA=
+github.com/oj-lab/go-webmods v0.1.4/go.mod h1:0XgDlF0OggU8dWTet19gMaUlsmLMVPCMN61ykxQtWWY=
+github.com/oj-lab/user-service v0.1.1 h1:KkOfWL31DAt7vIdwtPKwNcT3n3Dg4uaHSaYtRn+GuQY=
+github.com/oj-lab/user-service v0.1.1/go.mod h1:BM3aajWGWEpzQz8qZXfbcOcoXEo1C4hnLjDB5MKoi/M=
 github.com/pelletier/go-toml/v2 v2.2.4 h1:mye9XuhQ6gvn5h28+VilKrrPoQVanw5PMw/TB0t5Ec4=
 github.com/pelletier/go-toml/v2 v2.2.4/go.mod h1:2gIqNv+qfxSVS7cM2xJQKtLSTLUE9V8t9Stt+h56mCY=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=

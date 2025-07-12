@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -36,14 +37,20 @@ func (h *AuthHandler) Login(ctx echo.Context) error {
 		provider = "github"
 	}
 
+	// Automatically generate redirect URL based on request scheme and host
+	// E.g. When locally running, it will be http://localhost:8080/auth/callback
+	// When deployed, it will be https://example.com/auth/callback
+	redirectURL := fmt.Sprintf("%s://%s/auth/callback", ctx.Scheme(), ctx.Request().Host)
+
 	// Get OAuth URL from auth service
 	client := h.authService.GetClient()
 	resp, err := client.GetClient().
 		GetOAuthCodeURL(ctx.Request().Context(), &userpb.GetOAuthCodeURLRequest{
-			Provider: provider,
+			Provider:    provider,
+			RedirectUrl: &redirectURL,
 		})
 	if err != nil {
-		slog.Error("Failed to get OAuth URL", "error", err)
+		slog.Error("Failed to get OAuth URL", "error", err, "provider", provider, "redirect_url", redirectURL)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get OAuth URL")
 	}
 
