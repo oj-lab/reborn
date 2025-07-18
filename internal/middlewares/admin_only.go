@@ -40,7 +40,7 @@ func AdminOnly(authService *services.AuthService) echo.MiddlewareFunc {
 			}
 
 			// Create user service client using the same connection
-			var userServiceClient userpb.UserServiceClient = authClient.GetUserServiceClient()
+			userServiceClient := authClient.GetUserServiceClient()
 
 			// Create context with user token for authentication
 			md := metadata.Pairs("authorization", "Bearer "+userToken)

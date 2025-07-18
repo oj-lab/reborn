@@ -1,158 +1,122 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
-import { MoreHorizontal, Plus, Search, Users, Mail, Calendar, Clock } from 'lucide-react'
+import { MoreHorizontal, Plus, Search, Users, Mail, Calendar, Clock, Loader2 } from 'lucide-react'
+import { UserApi } from '@/api'
+import type { UserpbUser, UserpbListUsersResponse, TimestamppbTimestamp } from '@/api'
 
-interface User {
-  id: string
-  name: string
-  email: string
-  role: 'admin' | 'user' | 'moderator'
-  status: 'active' | 'inactive' | 'pending'
-  avatar?: string
-  createdAt: string
-  lastLogin?: string
+// API function to fetch users using generated client
+const fetchUsers = async (page: number = 1, pageSize: number = 10): Promise<UserpbListUsersResponse> => {
+  const userApi = new UserApi()
+  const response = await userApi.userListGet(page, pageSize)
+  return response.data
 }
-
-// Mock user data
-const mockUsers: User[] = [
-  {
-    id: '1',
-    name: '张三',
-    email: 'zhangsan@example.com',
-    role: 'admin',
-    status: 'active',
-    avatar: 'https://github.com/shadcn.png',
-    createdAt: '2024-01-15',
-    lastLogin: '2024-06-14'
-  },
-  {
-    id: '2',
-    name: '李四',
-    email: 'lisi@example.com',
-    role: 'user',
-    status: 'active',
-    createdAt: '2024-02-20',
-    lastLogin: '2024-06-13'
-  },
-  {
-    id: '3',
-    name: '王五',
-    email: 'wangwu@example.com',
-    role: 'moderator',
-    status: 'inactive',
-    createdAt: '2024-03-10',
-    lastLogin: '2024-06-10'
-  },
-  {
-    id: '4',
-    name: '赵六',
-    email: 'zhaoliu@example.com',
-    role: 'user',
-    status: 'pending',
-    createdAt: '2024-06-14'
-  }
-]
 
 export default function UserManagement() {
   const { t } = useTranslation()
-  const [users, setUsers] = useState<User[]>(mockUsers)
+  const [users, setUsers] = useState<UserpbUser[]>([])
+  const [totalUsers, setTotalUsers] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [newUser, setNewUser] = useState({
     name: '',
     email: '',
-    role: 'user' as User['role']
+    role: 0 as number
   })
+
+  // Load users on component mount
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const data = await fetchUsers(1, 10) // default values
+        setUsers(data.users || [])
+        setTotalUsers(data.total || 0)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load users')
+        console.error('Error loading users:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadUsers()
+  }, [])
 
   // Filter users
   const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (user.name && user.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
-  // Get status badge style
-  const getStatusBadge = (status: User['status']) => {
-    switch (status) {
-      case 'active':
-        return <Badge variant="default" className="bg-green-100 text-green-800">{t('common.active')}</Badge>
-      case 'inactive':
-        return <Badge variant="secondary">{t('common.inactive')}</Badge>
-      case 'pending':
-        return <Badge variant="outline" className="border-yellow-300 text-yellow-700">{t('common.pending')}</Badge>
-      default:
-        return <Badge variant="secondary">{status}</Badge>
-    }
-  }
-
   // Get role badge style
-  const getRoleBadge = (role: User['role']) => {
+  const getRoleBadge = (role?: number) => {
     switch (role) {
-      case 'admin':
+      case 1: // admin
         return <Badge variant="destructive">{t('common.admin')}</Badge>
-      case 'moderator':
-        return <Badge variant="default" className="bg-blue-100 text-blue-800">{t('common.moderator')}</Badge>
-      case 'user':
+      case 0: // user
         return <Badge variant="outline">{t('common.user')}</Badge>
       default:
-        return <Badge variant="outline">{role}</Badge>
+        return <Badge variant="outline">Unknown</Badge>
     }
   }
 
-  // Add user
+  // Format timestamp
+  const formatTimestamp = (timestamp?: TimestamppbTimestamp) => {
+    if (!timestamp || !timestamp.seconds) return '-'
+    const date = new Date(timestamp.seconds * 1000)
+    return date.toLocaleDateString()
+  }
+
+  // Add user (placeholder - would need backend API)
   const handleAddUser = () => {
-    const user: User = {
-      id: Date.now().toString(),
-      name: newUser.name,
-      email: newUser.email,
-      role: newUser.role,
-      status: 'pending',
-      createdAt: new Date().toISOString().split('T')[0]
-    }
-    setUsers([...users, user])
-    setNewUser({ name: '', email: '', role: 'user' })
+    // TODO: Implement add user API call
+    console.log('Add user:', newUser)
+    setNewUser({ name: '', email: '', role: 0 })
     setIsAddDialogOpen(false)
   }
 
-  // Delete user
-  const handleDeleteUser = (userId: string) => {
-    setUsers(users.filter(user => user.id !== userId))
+  // Delete user (placeholder - would need backend API)
+  const handleDeleteUser = (userId?: number) => {
+    if (!userId) return
+    // TODO: Implement delete user API call
+    console.log('Delete user:', userId)
   }
 
-  // Toggle user status
-  const toggleUserStatus = (userId: string) => {
-    setUsers(users.map(user => 
-      user.id === userId 
-        ? { ...user, status: user.status === 'active' ? 'inactive' : 'active' }
-        : user
-    ))
+  // Toggle user status (placeholder - would need backend API)
+  const toggleUserStatus = (userId?: number) => {
+    if (!userId) return
+    // TODO: Implement toggle user status API call
+    console.log('Toggle user status:', userId)
   }
 
   // Mobile user card component
-  const MobileUserCard = ({ user }: { user: User }) => (
+  const MobileUserCard = ({ user }: { user: UserpbUser }) => (
     <Card className="mb-4">
       <CardContent className="p-4">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3 flex-1">
             <Avatar>
-              <AvatarImage src={user.avatar} alt={user.name} />
               <AvatarFallback>
-                {user.name.substring(0, 2)}
+                {user.name ? user.name.substring(0, 2).toUpperCase() : 'U'}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <div className="font-medium">{user.name}</div>
               <div className="text-sm text-muted-foreground flex items-center">
                 <Mail className="h-3 w-3 mr-1" />
-                {user.email}
+                {user.email || '-'}
               </div>
             </div>
           </div>
@@ -166,13 +130,13 @@ export default function UserManagement() {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>{t('common.actions')}</DropdownMenuLabel>
               <DropdownMenuItem
-                onClick={() => navigator.clipboard.writeText(user.email)}
+                onClick={() => navigator.clipboard.writeText(user.email || '')}
               >
                 {t('userManagement.copyEmail')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => toggleUserStatus(user.id)}>
-                {user.status === 'active' ? t('userManagement.disableUser') : t('userManagement.enableUser')}
+                {t('userManagement.toggleUser')}
               </DropdownMenuItem>
               <DropdownMenuItem>{t('userManagement.editUser')}</DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -187,16 +151,15 @@ export default function UserManagement() {
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           {getRoleBadge(user.role)}
-          {getStatusBadge(user.status)}
         </div>
         <div className="mt-3 grid grid-cols-2 gap-4 text-sm text-muted-foreground">
           <div className="flex items-center">
             <Calendar className="h-3 w-3 mr-1" />
-            {t('common.createdAt')}: {user.createdAt}
+            {t('common.createdAt')}: {formatTimestamp(user.created_at)}
           </div>
           <div className="flex items-center">
             <Clock className="h-3 w-3 mr-1" />
-            {t('common.lastLogin')}: {user.lastLogin || '-'}
+            {t('common.updatedAt')}: {formatTimestamp(user.updated_at)}
           </div>
         </div>
       </CardContent>
@@ -258,12 +221,11 @@ export default function UserManagement() {
                 <select
                   id="role"
                   value={newUser.role}
-                  onChange={(e) => setNewUser({ ...newUser, role: e.target.value as User['role'] })}
+                  onChange={(e) => setNewUser({ ...newUser, role: parseInt(e.target.value) })}
                   className="md:col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <option value="user">{t('userManagement.selectUser')}</option>
-                  <option value="moderator">{t('userManagement.selectModerator')}</option>
-                  <option value="admin">{t('userManagement.selectAdmin')}</option>
+                  <option value={0}>{t('userManagement.selectUser')}</option>
+                  <option value={1}>{t('userManagement.selectAdmin')}</option>
                 </select>
               </div>
             </div>
@@ -286,33 +248,7 @@ export default function UserManagement() {
             <Users className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl md:text-2xl font-bold">{users.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs md:text-sm font-medium">
-              {t('userManagement.activeUsers')}
-            </CardTitle>
-            <div className="h-3 w-3 md:h-4 md:w-4 bg-green-500 rounded-full" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl md:text-2xl font-bold">
-              {users.filter(user => user.status === 'active').length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs md:text-sm font-medium">
-              {t('userManagement.pendingUsers')}
-            </CardTitle>
-            <div className="h-3 w-3 md:h-4 md:w-4 bg-yellow-500 rounded-full" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl md:text-2xl font-bold">
-              {users.filter(user => user.status === 'pending').length}
-            </div>
+            <div className="text-xl md:text-2xl font-bold">{totalUsers}</div>
           </CardContent>
         </Card>
         <Card>
@@ -324,7 +260,7 @@ export default function UserManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-xl md:text-2xl font-bold">
-              {users.filter(user => user.role === 'admin').length}
+              {users.filter(user => user.role === 1).length}
             </div>
           </CardContent>
         </Card>
@@ -348,92 +284,110 @@ export default function UserManagement() {
           </div>
         </CardHeader>
         <CardContent>
-          {/* Mobile card view */}
-          <div className="md:hidden">
-            {filteredUsers.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                {searchTerm ? t('userManagement.noUsersFound') : t('userManagement.noUsers')}
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin mr-2" />
+              <span>{t('common.loading')}</span>
+            </div>
+          ) : error ? (
+            <div className="text-center py-8 text-red-600">
+              <p>{error}</p>
+              <Button 
+                variant="outline" 
+                className="mt-2"
+                onClick={() => window.location.reload()}
+              >
+                {t('common.retry')}
+              </Button>
+            </div>
+          ) : (
+            <>
+              {/* Mobile card view */}
+              <div className="md:hidden">
+                {filteredUsers.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    {searchTerm ? t('userManagement.noUsersFound') : t('userManagement.noUsers')}
+                  </div>
+                ) : (
+                  filteredUsers.map((user) => (
+                    <MobileUserCard key={user.id} user={user} />
+                  ))
+                )}
               </div>
-            ) : (
-              filteredUsers.map((user) => (
-                <MobileUserCard key={user.id} user={user} />
-              ))
-            )}
-          </div>
 
-          {/* Desktop table view */}
-          <div className="hidden md:block">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('common.user')}</TableHead>
-                  <TableHead>{t('common.role')}</TableHead>
-                  <TableHead>{t('common.status')}</TableHead>
-                  <TableHead>{t('common.createdAt')}</TableHead>
-                  <TableHead>{t('common.lastLogin')}</TableHead>
-                  <TableHead className="text-right">{t('common.actions')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center space-x-3">
-                        <Avatar>
-                          <AvatarImage src={user.avatar} alt={user.name} />
-                          <AvatarFallback>
-                            {user.name.substring(0, 2)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-medium">{user.name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {user.email}
+              {/* Desktop table view */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t('common.user')}</TableHead>
+                      <TableHead>{t('common.role')}</TableHead>
+                      <TableHead>{t('common.createdAt')}</TableHead>
+                      <TableHead>{t('common.updatedAt')}</TableHead>
+                      <TableHead className="text-right">{t('common.actions')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredUsers.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center space-x-3">
+                            <Avatar>
+                              <AvatarFallback>
+                                {user.name ? user.name.substring(0, 2).toUpperCase() : 'U'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium">{user.name || 'Unknown'}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {user.email || '-'}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{getRoleBadge(user.role)}</TableCell>
-                    <TableCell>{getStatusBadge(user.status)}</TableCell>
-                    <TableCell>{user.createdAt}</TableCell>
-                    <TableCell>{user.lastLogin || '-'}</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">{t('userManagement.openMenu')}</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>{t('common.actions')}</DropdownMenuLabel>
-                          <DropdownMenuItem
-                            onClick={() => navigator.clipboard.writeText(user.email)}
-                          >
-                            {t('userManagement.copyEmail')}
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => toggleUserStatus(user.id)}>
-                            {user.status === 'active' ? t('userManagement.disableUser') : t('userManagement.enableUser')}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>{t('userManagement.editUser')}</DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            className="text-destructive"
-                            onClick={() => handleDeleteUser(user.id)}
-                          >
-                            {t('userManagement.deleteUser')}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                        </TableCell>
+                        <TableCell>{getRoleBadge(user.role)}</TableCell>
+                        <TableCell>{formatTimestamp(user.created_at)}</TableCell>
+                        <TableCell>{formatTimestamp(user.updated_at)}</TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">{t('userManagement.openMenu')}</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>{t('common.actions')}</DropdownMenuLabel>
+                              <DropdownMenuItem
+                                onClick={() => navigator.clipboard.writeText(user.email || '')}
+                              >
+                                {t('userManagement.copyEmail')}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => toggleUserStatus(user.id)}>
+                                {t('userManagement.toggleUser')}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>{t('userManagement.editUser')}</DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                className="text-destructive"
+                                onClick={() => handleDeleteUser(user.id)}
+                              >
+                                {t('userManagement.deleteUser')}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
   )
 }
+

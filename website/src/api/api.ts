@@ -58,6 +58,25 @@ export interface TimestamppbTimestamp {
 /**
  * 
  * @export
+ * @interface UserpbListUsersResponse
+ */
+export interface UserpbListUsersResponse {
+    /**
+     * 
+     * @type {number}
+     * @memberof UserpbListUsersResponse
+     */
+    'total'?: number;
+    /**
+     * 
+     * @type {Array<UserpbUser>}
+     * @memberof UserpbListUsersResponse
+     */
+    'users'?: Array<UserpbUser>;
+}
+/**
+ * 
+ * @export
  * @interface UserpbUser
  */
 export interface UserpbUser {
@@ -128,13 +147,53 @@ export type UserpbUserRole = typeof UserpbUserRole[keyof typeof UserpbUserRole];
 export const UserApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
+         * Retrieve a paginated list of all users (requires admin privileges)
+         * @summary List users
+         * @param {number} [page] Page number (default: 1)
+         * @param {number} [pageSize] Page size (default: 10)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userListGet: async (page?: number, pageSize?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/user/list`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            if (page !== undefined) {
+                localVarQueryParameter['page'] = page;
+            }
+
+            if (pageSize !== undefined) {
+                localVarQueryParameter['page_size'] = pageSize;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Retrieve the information of the currently authenticated user
          * @summary Get current user
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        apiV1UserMeGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            const localVarPath = `/api/v1/user/me`;
+        userMeGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/user/me`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -168,15 +227,29 @@ export const UserApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = UserApiAxiosParamCreator(configuration)
     return {
         /**
+         * Retrieve a paginated list of all users (requires admin privileges)
+         * @summary List users
+         * @param {number} [page] Page number (default: 1)
+         * @param {number} [pageSize] Page size (default: 10)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userListGet(page?: number, pageSize?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<UserpbListUsersResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userListGet(page, pageSize, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.userListGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Retrieve the information of the currently authenticated user
          * @summary Get current user
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async apiV1UserMeGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<UserpbUser>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.apiV1UserMeGet(options);
+        async userMeGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<UserpbUser>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeGet(options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['UserApi.apiV1UserMeGet']?.[localVarOperationServerIndex]?.url;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.userMeGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
     }
@@ -190,13 +263,24 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
     const localVarFp = UserApiFp(configuration)
     return {
         /**
+         * Retrieve a paginated list of all users (requires admin privileges)
+         * @summary List users
+         * @param {number} [page] Page number (default: 1)
+         * @param {number} [pageSize] Page size (default: 10)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userListGet(page?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<UserpbListUsersResponse> {
+            return localVarFp.userListGet(page, pageSize, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Retrieve the information of the currently authenticated user
          * @summary Get current user
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        apiV1UserMeGet(options?: RawAxiosRequestConfig): AxiosPromise<UserpbUser> {
-            return localVarFp.apiV1UserMeGet(options).then((request) => request(axios, basePath));
+        userMeGet(options?: RawAxiosRequestConfig): AxiosPromise<UserpbUser> {
+            return localVarFp.userMeGet(options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -209,14 +293,27 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
  */
 export class UserApi extends BaseAPI {
     /**
+     * Retrieve a paginated list of all users (requires admin privileges)
+     * @summary List users
+     * @param {number} [page] Page number (default: 1)
+     * @param {number} [pageSize] Page size (default: 10)
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApi
+     */
+    public userListGet(page?: number, pageSize?: number, options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).userListGet(page, pageSize, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
      * Retrieve the information of the currently authenticated user
      * @summary Get current user
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UserApi
      */
-    public apiV1UserMeGet(options?: RawAxiosRequestConfig) {
-        return UserApiFp(this.configuration).apiV1UserMeGet(options).then((request) => request(this.axios, this.basePath));
+    public userMeGet(options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).userMeGet(options).then((request) => request(this.axios, this.basePath));
     }
 }
 
