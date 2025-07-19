@@ -24,6 +24,7 @@ func RegisterAPIv1Routes(e *echo.Echo, serviceManager *services.ServiceManager) 
 		userGroup.Use(middlewares.LoginSession(authService))
 		{
 			userGroup.GET("/me", userHandler.GetCurrentUser)
+			userGroup.GET("/list", userHandler.ListUsers, middlewares.AdminOnly(authService))
 		}
 	}
 }

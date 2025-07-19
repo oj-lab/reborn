@@ -59,13 +59,10 @@ func main() {
 		})
 	})
 
-	// Register API routes
+	// Register routes
 	routers.RegisterAPIv1Routes(e, serviceManager)
 	routers.RegisterAuthRoutes(e, serviceManager)
-	routers.RegisterAdminRoutes(e, serviceManager)
-
-	// Add static website middleware (this should be last)
-	e.Use(middlewares.StaticWebsite(cfg))
+	routers.RegisterPageRoutes(e, serviceManager)
 
 	// Start server in a goroutine
 	go func() {

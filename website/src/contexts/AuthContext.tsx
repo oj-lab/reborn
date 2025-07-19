@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react'
 import type { ReactNode } from 'react'
-import { apiClient } from '@/api/client'
-import type { UserpbUser } from '@/api/api'
+import { UserApi, type UserpbUser } from '@/api/api'
 import { AuthContext, type AuthContextType } from './auth-context'
 
 interface AuthProviderProps {
@@ -14,7 +13,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const fetchUser = useCallback(async () => {
     try {
-      const response = await apiClient.userApi.apiV1UserMeGet()
+      const userApi = new UserApi()
+      const response = await userApi.userMeGet()
       setUser(response.data)
     } catch (error) {
       console.error('Failed to fetch user:', error)
