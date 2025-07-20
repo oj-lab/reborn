@@ -6,10 +6,10 @@ import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
-import { MoreHorizontal, Plus, Search, Users, Mail, Calendar, Clock, Loader2 } from 'lucide-react'
+import { Plus, Search, Users, Mail, Calendar, Clock, Loader2 } from 'lucide-react'
 import { UserApi } from '@/api'
 import type { UserpbUser, UserpbListUsersResponse, TimestamppbTimestamp } from '@/api'
 
@@ -20,6 +20,32 @@ const fetchUsers = async (page: number = 1, pageSize: number = 10): Promise<User
   return response.data
 }
 
+// API function to delete user
+const deleteUser = async (userId: number): Promise<void> => {
+  const response = await fetch(`/api/v1/user/${userId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to delete user: ${response.statusText}`)
+  }
+}
+
+// API function to set admin role
+const setAdminRole = async (userId: number): Promise<void> => {
+  const response = await fetch(`/api/v1/user/${userId}/admin`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to set admin role: ${response.statusText}`)
+  }
+}
+
 export default function UserManagement() {
   const { t } = useTranslation()
   const [users, setUsers] = useState<UserpbUser[]>([])
@@ -28,30 +54,38 @@ export default function UserManagement() {
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [currentUser, setCurrentUser] = useState<UserpbUser | null>(null)
   const [newUser, setNewUser] = useState({
     name: '',
     email: '',
     role: 0 as number
   })
 
-  // Load users on component mount
+  // Load users and current user on component mount
   useEffect(() => {
-    const loadUsers = async () => {
+    const loadData = async () => {
       try {
         setLoading(true)
         setError(null)
+        
+        // Load current user info
+        const userApi = new UserApi()
+        const currentUserResponse = await userApi.userMeGet()
+        setCurrentUser(currentUserResponse.data)
+        
+        // Load users list
         const data = await fetchUsers(1, 10) // default values
         setUsers(data.users || [])
         setTotalUsers(data.total || 0)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load users')
-        console.error('Error loading users:', err)
+        setError(err instanceof Error ? err.message : 'Failed to load data')
+        console.error('Error loading data:', err)
       } finally {
         setLoading(false)
       }
     }
 
-    loadUsers()
+    loadData()
   }, [])
 
   // Filter users
@@ -68,7 +102,7 @@ export default function UserManagement() {
       case 0: // user
         return <Badge variant="outline">{t('common.user')}</Badge>
       default:
-        return <Badge variant="outline">Unknown</Badge>
+        return <Badge variant="outline">{t('common.user')}</Badge>
     }
   }
 
@@ -87,18 +121,50 @@ export default function UserManagement() {
     setIsAddDialogOpen(false)
   }
 
-  // Delete user (placeholder - would need backend API)
-  const handleDeleteUser = (userId?: number) => {
+  // Delete user
+  const handleDeleteUser = async (userId?: number) => {
     if (!userId) return
-    // TODO: Implement delete user API call
-    console.log('Delete user:', userId)
+    
+    // Check if user is trying to delete themselves
+    if (currentUser && userId === currentUser.id) {
+      alert(t('userManagement.cannotDeleteSelf'))
+      return
+    }
+    
+    if (!confirm(t('userManagement.confirmDelete'))) {
+      return
+    }
+
+    try {
+      await deleteUser(userId)
+      // Refresh the user list
+      const data = await fetchUsers(1, 10)
+      setUsers(data.users || [])
+      setTotalUsers(data.total || 0)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete user')
+      console.error('Error deleting user:', err)
+    }
   }
 
-  // Toggle user status (placeholder - would need backend API)
-  const toggleUserStatus = (userId?: number) => {
+  // Set admin role
+  const handleSetAdminRole = async (userId?: number) => {
     if (!userId) return
-    // TODO: Implement toggle user status API call
-    console.log('Toggle user status:', userId)
+    
+    if (!confirm(t('userManagement.confirmSetAdmin'))) {
+      return
+    }
+
+    try {
+      await setAdminRole(userId)
+      // Refresh the user list
+      const data = await fetchUsers(1, 10)
+      setUsers(data.users || [])
+      setTotalUsers(data.total || 0)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to set admin role')
+      console.error('Error setting admin role:', err)
+    }
   }
 
   // Mobile user card component
@@ -120,34 +186,6 @@ export default function UserManagement() {
               </div>
             </div>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">{t('userManagement.openMenu')}</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>{t('common.actions')}</DropdownMenuLabel>
-              <DropdownMenuItem
-                onClick={() => navigator.clipboard.writeText(user.email || '')}
-              >
-                {t('userManagement.copyEmail')}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => toggleUserStatus(user.id)}>
-                {t('userManagement.toggleUser')}
-              </DropdownMenuItem>
-              <DropdownMenuItem>{t('userManagement.editUser')}</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                className="text-destructive"
-                onClick={() => handleDeleteUser(user.id)}
-              >
-                {t('userManagement.deleteUser')}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           {getRoleBadge(user.role)}
@@ -161,6 +199,28 @@ export default function UserManagement() {
             <Clock className="h-3 w-3 mr-1" />
             {t('common.updatedAt')}: {formatTimestamp(user.updated_at)}
           </div>
+        </div>
+        <div className="mt-4 flex gap-2">
+          {user.role !== 1 && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleSetAdminRole(user.id)}
+              className="flex-1"
+            >
+              {t('userManagement.setAdmin')}
+            </Button>
+          )}
+          {!(currentUser && user.id === currentUser.id) && (
+            <Button 
+              variant="destructive" 
+              size="sm" 
+              onClick={() => handleDeleteUser(user.id)}
+              className="flex-1"
+            >
+              {t('userManagement.deleteUser')}
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -349,34 +409,26 @@ export default function UserManagement() {
                         <TableCell>{formatTimestamp(user.created_at)}</TableCell>
                         <TableCell>{formatTimestamp(user.updated_at)}</TableCell>
                         <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">{t('userManagement.openMenu')}</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>{t('common.actions')}</DropdownMenuLabel>
-                              <DropdownMenuItem
-                                onClick={() => navigator.clipboard.writeText(user.email || '')}
+                          <div className="flex gap-2 justify-end">
+                            {user.role !== 1 && (
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => handleSetAdminRole(user.id)}
                               >
-                                {t('userManagement.copyEmail')}
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => toggleUserStatus(user.id)}>
-                                {t('userManagement.toggleUser')}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>{t('userManagement.editUser')}</DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                className="text-destructive"
+                                {t('userManagement.setAdmin')}
+                              </Button>
+                            )}
+                            {!(currentUser && user.id === currentUser.id) && (
+                              <Button 
+                                variant="destructive" 
+                                size="sm" 
                                 onClick={() => handleDeleteUser(user.id)}
                               >
                                 {t('userManagement.deleteUser')}
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
