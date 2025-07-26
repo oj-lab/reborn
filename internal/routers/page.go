@@ -2,6 +2,7 @@ package routers
 
 import (
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -95,7 +96,13 @@ func serveIndexFile(c echo.Context, filePath string) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "Admin page not found")
 	}
-	defer file.Close()
+	defer func() {
+		if closeErr := file.Close(); closeErr != nil {
+			slog.ErrorContext(c.Request().Context(), "Failed to close file",
+				"file", filePath,
+				"error", closeErr)
+		}
+	}()
 
 	// Set content type for HTML
 	c.Response().Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -154,7 +161,13 @@ func serveStaticFile(c echo.Context, filePath string) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		if closeErr := file.Close(); closeErr != nil {
+			slog.ErrorContext(c.Request().Context(), "Failed to close file",
+				"file", filePath,
+				"error", closeErr)
+		}
+	}()
 
 	// Set content type based on file extension
 	ext := filepath.Ext(filePath)

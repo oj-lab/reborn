@@ -50,7 +50,15 @@ func (h *AuthHandler) Login(ctx echo.Context) error {
 			RedirectUrl: &redirectURL,
 		})
 	if err != nil {
-		slog.Error("Failed to get OAuth URL", "error", err, "provider", provider, "redirect_url", redirectURL)
+		slog.Error(
+			"Failed to get OAuth URL",
+			"error",
+			err,
+			"provider",
+			provider,
+			"redirect_url",
+			redirectURL,
+		)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get OAuth URL")
 	}
 

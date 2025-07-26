@@ -36,7 +36,10 @@ func AdminOnly(authService *services.AuthService) echo.MiddlewareFunc {
 			// Get auth service client
 			authClient := authService.GetClient()
 			if authClient == nil {
-				return echo.NewHTTPError(http.StatusServiceUnavailable, "User service client unavailable")
+				return echo.NewHTTPError(
+					http.StatusServiceUnavailable,
+					"User service client unavailable",
+				)
 			}
 
 			// Create user service client using the same connection
@@ -53,7 +56,10 @@ func AdminOnly(authService *services.AuthService) echo.MiddlewareFunc {
 				if grpcStatus, ok := status.FromError(err); ok {
 					switch grpcStatus.Code() {
 					case codes.Unauthenticated:
-						return echo.NewHTTPError(http.StatusUnauthorized, "Invalid or expired token")
+						return echo.NewHTTPError(
+							http.StatusUnauthorized,
+							"Invalid or expired token",
+						)
 					case codes.NotFound:
 						return echo.NewHTTPError(http.StatusNotFound, "User not found")
 					case codes.PermissionDenied:
@@ -65,7 +71,10 @@ func AdminOnly(authService *services.AuthService) echo.MiddlewareFunc {
 						)
 					}
 				}
-				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get user information")
+				return echo.NewHTTPError(
+					http.StatusInternalServerError,
+					"Failed to get user information",
+				)
 			}
 
 			// Check if user is admin

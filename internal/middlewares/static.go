@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -62,7 +63,14 @@ func serveFile(c echo.Context, filePath string) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		if closeErr := file.Close(); closeErr != nil {
+			// Log the close error but don't override the main error
+			slog.ErrorContext(c.Request().Context(), "Failed to close file",
+				"file", filePath,
+				"error", closeErr)
+		}
+	}()
 
 	// Set content type based on file extension
 	ext := filepath.Ext(filePath)
