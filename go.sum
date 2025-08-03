@@ -35,8 +35,8 @@ github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWE
 github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
 github.com/oj-lab/go-webmods v0.1.4 h1:NJPv6FxG3JPjwMpUThGtr1ngfkLxVk2cin29MTGuQRA=
 github.com/oj-lab/go-webmods v0.1.4/go.mod h1:0XgDlF0OggU8dWTet19gMaUlsmLMVPCMN61ykxQtWWY=
-github.com/oj-lab/user-service v0.1.1 h1:KkOfWL31DAt7vIdwtPKwNcT3n3Dg4uaHSaYtRn+GuQY=
-github.com/oj-lab/user-service v0.1.1/go.mod h1:BM3aajWGWEpzQz8qZXfbcOcoXEo1C4hnLjDB5MKoi/M=
+github.com/oj-lab/user-service v0.1.2 h1:CuAmVMBjDzDR1/1Xk1h623HCE8QeQDAXHRVNP/lVPAM=
+github.com/oj-lab/user-service v0.1.2/go.mod h1:BM3aajWGWEpzQz8qZXfbcOcoXEo1C4hnLjDB5MKoi/M=
 github.com/pelletier/go-toml/v2 v2.2.4 h1:mye9XuhQ6gvn5h28+VilKrrPoQVanw5PMw/TB0t5Ec4=
 github.com/pelletier/go-toml/v2 v2.2.4/go.mod h1:2gIqNv+qfxSVS7cM2xJQKtLSTLUE9V8t9Stt+h56mCY=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=

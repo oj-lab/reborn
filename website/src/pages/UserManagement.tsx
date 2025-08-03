@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label'
 import { Plus, Search, Users, Mail, Calendar, Clock, Loader2 } from 'lucide-react'
 import { UserApi } from '@/api'
 import type { UserpbUser, UserpbListUsersResponse, TimestamppbTimestamp } from '@/api'
+import { UserpbUserRole } from '@/api'
 
 // API function to fetch users using generated client
 const fetchUsers = async (page: number = 1, pageSize: number = 10): Promise<UserpbListUsersResponse> => {
@@ -97,9 +98,9 @@ export default function UserManagement() {
   // Get role badge style
   const getRoleBadge = (role?: number) => {
     switch (role) {
-      case 1: // admin
+      case UserpbUserRole.UserRole_ADMIN:
         return <Badge variant="destructive">{t('common.admin')}</Badge>
-      case 0: // user
+      case UserpbUserRole.UserRole_USER:
         return <Badge variant="outline">{t('common.user')}</Badge>
       default:
         return <Badge variant="outline">{t('common.user')}</Badge>

@@ -137,7 +137,9 @@ func (h *UserHandler) ListUsers(c echo.Context) error {
 
 	page := c.QueryParam("page")
 	pageSize := c.QueryParam("page_size")
-
+	userRole := c.QueryParam("user_role")
+	email := c.QueryParam("email")
+	name := c.QueryParam("name")
 	if page == "" {
 		page = "1"
 	}
@@ -153,12 +155,29 @@ func (h *UserHandler) ListUsers(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid page size parameter")
 	}
-
-	// Get current user information
-	users, err := userServiceClient.ListUsers(ctx, &userpb.ListUsersRequest{
+	request := &userpb.ListUsersRequest{
 		Page:     uint64(pageInt),
 		PageSize: uint64(pageSizeInt),
-	})
+	}
+
+	if email != "" {
+		request.Email = &email
+	}
+	if name != "" {
+		request.Name = &name
+	}
+	if userRole != "" {
+		// Parse user role from string to enum using protobuf generated mapping
+		if roleValue, exists := userpb.UserRole_value[userRole]; exists {
+			role := userpb.UserRole(roleValue)
+			request.Role = &role
+		} else {
+			return echo.NewHTTPError(http.StatusBadRequest, "Invalid user role parameter")
+		}
+	}
+
+	// Get current user information
+	users, err := userServiceClient.ListUsers(ctx, request)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to list users")
 	}
@@ -223,7 +242,7 @@ func (h *UserHandler) SetAdminRole(c echo.Context) error {
 	ctx := metadata.NewOutgoingContext(c.Request().Context(), md)
 	// Get current user information
 	if _, err := userServiceClient.UpdateUser(ctx, &userpb.UpdateUserRequest{
-		Id: userIDInt,
+		Id:   userIDInt,
 		Role: userpb.UserRole_ADMIN.Enum(),
 	}); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to set admin role")
