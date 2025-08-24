@@ -137,7 +137,9 @@ func (h *UserHandler) ListUsers(c echo.Context) error {
 
 	page := c.QueryParam("page")
 	pageSize := c.QueryParam("page_size")
-
+	userRole := c.QueryParam("user_role")
+	email := c.QueryParam("email")
+	name := c.QueryParam("name")
 	if page == "" {
 		page = "1"
 	}
@@ -153,15 +155,228 @@ func (h *UserHandler) ListUsers(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid page size parameter")
 	}
-
-	// Get current user information
-	users, err := userServiceClient.ListUsers(ctx, &userpb.ListUsersRequest{
+	request := &userpb.ListUsersRequest{
 		Page:     uint64(pageInt),
 		PageSize: uint64(pageSizeInt),
-	})
+	}
+
+	if email != "" {
+		request.Email = &email
+	}
+	if name != "" {
+		request.Name = &name
+	}
+	if userRole != "" {
+		// Parse user role from string to enum using protobuf generated mapping
+		if roleValue, exists := userpb.UserRole_value[userRole]; exists {
+			role := userpb.UserRole(roleValue)
+			request.Role = &role
+		} else {
+			return echo.NewHTTPError(http.StatusBadRequest, "Invalid user role parameter")
+		}
+	}
+
+	// Get current user information
+	users, err := userServiceClient.ListUsers(ctx, request)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to list users")
 	}
 
 	return c.JSON(http.StatusOK, users)
+}
+
+// SetAdminRole sets the admin role for a user (admin only)
+//
+//	@Summary		Set admin role
+//	@Description	Set the admin role for a user
+//	@Tags			user
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string	true	"User ID"
+//	@Success		200			{object}	userpb.User
+//	@Failure		400			{object}	echo.HTTPError	"Bad Request"
+//	@Failure		401			{object}	echo.HTTPError	"Unauthorized"
+//	@Failure		403			{object}	echo.HTTPError	"Forbidden - Admin access required"
+//	@Failure		404			{object}	echo.HTTPError	"User not found"
+//	@Failure		500			{object}	echo.HTTPError	"Internal Server Error"
+//	@Router			/user/{id}/admin [put]
+//	@Security		BearerAuth
+func (h *UserHandler) SetAdminRole(c echo.Context) error {
+	userID := c.Param("id")
+
+	if userID == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "User ID is required")
+	}
+
+	userIDInt, err := strconv.ParseUint(userID, 10, 64)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid user ID")
+	}
+
+	// Check if user is authenticated
+	if !middlewares.IsAuthenticated(c) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Authentication required")
+	}
+
+	// Get user token from context
+	userToken := middlewares.GetUserToken(c)
+	if userToken == "" {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Invalid user token")
+	}
+
+	// Check if auth service is available
+	if h.authService == nil || !h.authService.IsHealthy() {
+		return echo.NewHTTPError(http.StatusServiceUnavailable, "User service unavailable")
+	}
+
+	// Get auth service client
+	authClient := h.authService.GetClient()
+	if authClient == nil {
+		return echo.NewHTTPError(http.StatusServiceUnavailable, "User service client unavailable")
+	}
+
+	// Create user service client using the same connection
+	userServiceClient := authClient.GetUserServiceClient()
+	// Create context with user token for authentication
+	md := metadata.Pairs("authorization", "Bearer "+userToken)
+	ctx := metadata.NewOutgoingContext(c.Request().Context(), md)
+	// Get current user information
+	if _, err := userServiceClient.UpdateUser(ctx, &userpb.UpdateUserRequest{
+		Id:   userIDInt,
+		Role: userpb.UserRole_ADMIN.Enum(),
+	}); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to set admin role")
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
+// GetUser returns a user by ID (admin only)
+//
+//	@Summary		Get user by ID
+//	@Description	Retrieve user information by their unique ID
+//	@Tags			user
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string	true	"User ID"
+//	@Success		200			{object}	userpb.User
+//	@Failure		400			{object}	echo.HTTPError	"Bad Request"
+//	@Failure		401			{object}	echo.HTTPError	"Unauthorized"
+//	@Failure		403			{object}	echo.HTTPError	"Forbidden - Admin access required"
+//	@Failure		404			{object}	echo.HTTPError	"User not found"
+//	@Failure		500			{object}	echo.HTTPError	"Internal Server Error"
+//	@Router			/user/{id} [get]
+//	@Security		BearerAuth
+func (h *UserHandler) GetUser(c echo.Context) error {
+	userID := c.Param("id")
+
+	if userID == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "User ID is required")
+	}
+
+	userIDInt, err := strconv.ParseUint(userID, 10, 64)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid user ID")
+	}
+
+	// Check if user is authenticated
+	if !middlewares.IsAuthenticated(c) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Authentication required")
+	}
+
+	// Get user token from context
+	userToken := middlewares.GetUserToken(c)
+	if userToken == "" {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Invalid user token")
+	}
+
+	// Check if auth service is available
+	if h.authService == nil || !h.authService.IsHealthy() {
+		return echo.NewHTTPError(http.StatusServiceUnavailable, "User service unavailable")
+	}
+
+	// Get auth service client
+	authClient := h.authService.GetClient()
+	if authClient == nil {
+		return echo.NewHTTPError(http.StatusServiceUnavailable, "User service client unavailable")
+	}
+
+	// Create user service client using the same connection
+	userServiceClient := authClient.GetUserServiceClient()
+	// Create context with user token for authentication
+	md := metadata.Pairs("authorization", "Bearer "+userToken)
+	ctx := metadata.NewOutgoingContext(c.Request().Context(), md)
+	// Get current user information
+	user, err := userServiceClient.GetUser(ctx, &userpb.GetUserRequest{
+		Id: userIDInt,
+	})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get user")
+	}
+	return c.JSON(http.StatusOK, user)
+}
+
+// DeleteUser deletes a user by ID (admin only)
+//
+//	@Summary		Delete user by ID
+//	@Description	Delete user information by their unique ID
+//	@Tags			user
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string	true	"User ID"
+//	@Success		204			{object}	empty	"No Content"
+//	@Failure		400			{object}	echo.HTTPError	"Bad Request"
+//	@Failure		401			{object}	echo.HTTPError	"Unauthorized"
+//	@Failure		403			{object}	echo.HTTPError	"Forbidden - Admin access required"
+//	@Failure		404			{object}	echo.HTTPError	"User not found"
+//	@Failure		500			{object}	echo.HTTPError	"Internal Server Error"
+//	@Router			/user/{id} [delete]
+//	@Security		BearerAuth
+func (h *UserHandler) DeleteUser(c echo.Context) error {
+	userID := c.Param("id")
+
+	if userID == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "User ID is required")
+	}
+
+	userIDInt, err := strconv.ParseUint(userID, 10, 64)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid user ID")
+	}
+
+	// Check if user is authenticated
+	if !middlewares.IsAuthenticated(c) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Authentication required")
+	}
+
+	// Get user token from context
+	userToken := middlewares.GetUserToken(c)
+	if userToken == "" {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Invalid user token")
+	}
+
+	// Check if auth service is available
+	if h.authService == nil || !h.authService.IsHealthy() {
+		return echo.NewHTTPError(http.StatusServiceUnavailable, "User service unavailable")
+	}
+
+	// Get auth service client
+	authClient := h.authService.GetClient()
+	if authClient == nil {
+		return echo.NewHTTPError(http.StatusServiceUnavailable, "User service client unavailable")
+	}
+
+	// Create user service client using the same connection
+	userServiceClient := authClient.GetUserServiceClient()
+	// Create context with user token for authentication
+	md := metadata.Pairs("authorization", "Bearer "+userToken)
+	ctx := metadata.NewOutgoingContext(c.Request().Context(), md)
+	// Get current user information
+	if _, err := userServiceClient.DeleteUser(ctx, &userpb.DeleteUserRequest{
+		Id: userIDInt,
+	}); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete user")
+	}
+
+	return c.NoContent(http.StatusNoContent)
 }
